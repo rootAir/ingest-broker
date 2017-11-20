@@ -202,6 +202,7 @@ class IngestApi:
         r = requests.post(fromUri.rsplit("{")[0],
                           data=toUri.rsplit("{")[0], headers=headers)
         if r.status_code != requests.codes.no_content:
+            self.logger.error('error in linking entity')
             raise ValueError("Error creating relationship between entity: "+fromUri+" -> "+toUri)
         self.logger.debug("Asserted relationship between "+fromUri+" -> "+toUri)
 

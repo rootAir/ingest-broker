@@ -133,10 +133,10 @@ class SpreadsheetSubmission:
         submitterSheet = wb.get_sheet_by_name("contact.submitter")
         contributorSheet = wb.get_sheet_by_name("contact.contributors")
         specimenSheet = wb.get_sheet_by_name("sample.specimen_from_organism")
-        specimenStateSheet = wb.get_sheet_by_name("sample.specimen_from_organism.state_of_specimen")
+        specimenStateSheet = wb.get_sheet_by_name("sample.specimen_from_organism.s")
         donorSheet = wb.get_sheet_by_name("sample.donor")
         cellSuspensionSheet = wb.get_sheet_by_name("sample.cell_suspension")
-        cellSuspensionEnrichmentSheet = wb.get_sheet_by_name("sample.cell_suspension.enrichment")
+        cellSuspensionEnrichmentSheet = wb.get_sheet_by_name("sample.cell_suspension.enrichme")
         cellSuspensionWellSheet = wb.get_sheet_by_name("sample.cell_suspension.well")
 
         organoidSheet = wb.create_sheet()
@@ -241,7 +241,6 @@ class SpreadsheetSubmission:
             protocolMap[protocol["protocol_id"]] = protocol
             if not self.dryrun:
                 protocolIngest = self.ingest_api.createProtocol(submissionUrl, json.dumps(protocol))
-                self.ingest_api.linkEntity(protocolIngest, projectIngest, "projects")
                 protocolMap[protocol["protocol_id"]] = protocolIngest
             else:
                 linksList.append("protocol_"+protocol["protocol_id"]+"-project_"+projectId)
@@ -424,8 +423,8 @@ class SpreadsheetSubmission:
                 fileIngest = self.ingest_api.createFile(submissionUrl, file["filename"], json.dumps(file))
                 filesMap[file["filename"]] = fileIngest
 
-                if sample in sampleMap:
-                    self.ingest_api.linkEntity(fileIngest, sampleMap[sample], "samples")
+                # if sample in sampleMap:
+                #     self.ingest_api.linkEntity(fileIngest, sampleMap[sample], "samples")
             else:
                 if sample in sampleMap:
                     linksList.append("file_" + file["filename"] + "-sample_" + sample)
