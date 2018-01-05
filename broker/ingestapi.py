@@ -245,8 +245,11 @@ class IngestApi:
         fromUri = fromEntity["_links"][relationship]["href"]
         toUri = self.getObjectId(toEntity)
         headers = {'Content-type': 'text/uri-list'}
-        r = requests.post(fromUri.rsplit("{")[0],
+        try:
+            r = requests.post(fromUri.rsplit("{")[0],
                           data=toUri.rsplit("{")[0], headers=headers)
+        except Exception as e:
+            self.logger.error("ERROR: attempted to post to " + fromUri.rsplit("{")[0])
         if r.status_code != requests.codes.no_content:
             raise ValueError("Error creating relationship between entity: " + fromUri + " -> " + toUri)
         self.logger.debug("Asserted relationship between " + fromUri + " -> " + toUri)
