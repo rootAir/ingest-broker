@@ -245,6 +245,7 @@ class IngestApi:
         fromUri = fromEntity["_links"][relationship]["href"]
         toUri = self.getObjectId(toEntity)
         headers = {'Content-type': 'text/uri-list'}
+        r = None
         try:
             r = requests.post(fromUri.rsplit("{")[0],
                           data=toUri.rsplit("{")[0], headers=headers)
