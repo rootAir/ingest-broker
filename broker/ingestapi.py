@@ -250,7 +250,7 @@ class IngestApi:
             r = requests.post(fromUri.rsplit("{")[0],
                           data=toUri.rsplit("{")[0], headers=headers)
         except Exception as e:
-            self.logger.error("ERROR: attempted to post to " + fromUri.rsplit("{")[0])
+            self.logger.error("ERROR: attempted to post to " + fromUri.rsplit("{")[0] + " with payload:" + toUri.rsplit("{")[0])
             raise e
         if r.status_code != requests.codes.no_content:
             raise ValueError("Error creating relationship between entity: " + fromUri + " -> " + toUri)
