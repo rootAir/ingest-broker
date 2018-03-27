@@ -2,14 +2,27 @@
 """
 desc goes here
 """
+import json
+import logging
+import os
 import time
+import uuid
+import requests
+
+from requests.packages.urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 from requests import HTTPError
 
 __author__ = "jupp"
 __license__ = "Apache 2.0"
 
-import json, os, urllib, requests, logging, uuid
+s = requests.Session()
 
+retries = Retry(total=10,
+                backoff_factor=0.1,
+                status_forcelist=[500, 502, 503, 504])
+
+s.mount('http://', HTTPAdapter(max_retries=retries))  # TODO also do for https
 
 class IngestApi:
     def __init__(self, url=None):
@@ -34,12 +47,12 @@ class IngestApi:
 
     def load_root(self):
         if not self.ingest_api:
-            reply = requests.get(self.url, headers=self.headers)
+            reply = s.get(self.url, headers=self.headers)
             self.ingest_api = reply.json()["_links"]
 
     def getSubmissions(self):
         params = {'sort': 'submissionDate,desc'}
-        r = requests.get(self.ingest_api["submissionEnvelopes"]["href"].rsplit("{")[0], params=params,
+        r = s.get(self.ingest_api["submissionEnvelopes"]["href"].rsplit("{")[0], params=params,
                          headers=self.headers)
         if r.status_code == requests.codes.ok:
             return json.loads(r.text)["_embedded"]["submissionEnvelopes"]
@@ -52,7 +65,7 @@ class IngestApi:
             headers = {'If-Modified-Since': datetimeUTC}
 
         self.logger.info('headers:' + str(headers))
-        r = requests.get(submissionUrl, headers=headers)
+        r = s.get(submissionUrl, headers=headers)
 
         if r.status_code == requests.codes.ok:
             submission = json.loads(r.text)
@@ -62,7 +75,7 @@ class IngestApi:
 
     def getProjects(self, id):
         submissionUrl = self.url + '/submissionEnvelopes/' + id + '/projects'
-        r = requests.get(submissionUrl, headers=self.headers)
+        r = s.get(submissionUrl, headers=self.headers)
         projects = []
         if r.status_code == requests.codes.ok:
             projects = json.loads(r.text)
@@ -70,7 +83,7 @@ class IngestApi:
 
     def getProjectById(self, id):
         submissionUrl = self.url + '/projects/' + id
-        r = requests.get(submissionUrl, headers=self.headers)
+        r = s.get(submissionUrl, headers=self.headers)
         if r.status_code == requests.codes.ok:
             project = json.loads(r.text)
             return project
@@ -78,7 +91,7 @@ class IngestApi:
             raise ValueError("Project " + id + " could not be retrieved")
 
     def getSubmissionEnvelope(self, submissionUrl):
-        r = requests.get(submissionUrl, headers=self.headers)
+        r = s.get(submissionUrl, headers=self.headers)
         if r.status_code == requests.codes.ok:
             submissionEnvelope = json.loads(r.text)
             return submissionEnvelope
@@ -87,7 +100,7 @@ class IngestApi:
 
     def getFiles(self, id):
         submissionUrl = self.url + '/submissionEnvelopes/' + id + '/files'
-        r = requests.get(submissionUrl, headers=self.headers)
+        r = s.get(submissionUrl, headers=self.headers)
         files = []
         if r.status_code == requests.codes.ok:
             files = json.loads(r.text)
@@ -95,7 +108,7 @@ class IngestApi:
 
     def getBundleManifests(self, id):
         submissionUrl = self.url + '/submissionEnvelopes/' + id + '/bundleManifests'
-        r = requests.get(submissionUrl, headers=self.headers)
+        r = s.get(submissionUrl, headers=self.headers)
         bundleManifests = []
 
         if r.status_code == requests.codes.ok:
@@ -107,7 +120,7 @@ class IngestApi:
                         'Authorization': token
                         }
         try:
-            r = requests.post(self.ingest_api["submissionEnvelopes"]["href"].rsplit("{")[0], data="{}",
+            r = s.post(self.ingest_api["submissionEnvelopes"]["href"].rsplit("{")[0], data="{}",
                               headers=auth_headers)
             r.raise_for_status()
             submissionUrl = json.loads(r.text)["_links"]["self"]["href"].rsplit("{")[0]
@@ -118,7 +131,7 @@ class IngestApi:
             raise
 
     def finishSubmission(self, submissionUrl):
-        r = requests.put(submissionUrl, headers=self.headers)
+        r = s.put(submissionUrl, headers=self.headers)
         if r.status_code == requests.codes.update:
             self.logger.info("Submission complete!")
             return r.text
@@ -127,13 +140,13 @@ class IngestApi:
         state_url = self.getSubmissionStateUrl(submissionId, state)
 
         if state_url:
-            r = requests.put(state_url, headers=self.headers)
+            r = s.put(state_url, headers=self.headers)
 
         return self.handleResponse(r)
 
     def getSubmissionStateUrl(self, submissionId, state):
         submissionUrl = self.getSubmissionUri(submissionId)
-        response = requests.get(submissionUrl, headers=self.headers)
+        response = s.get(submissionUrl, headers=self.headers)
         submission = self.handleResponse(response)
 
         if submission and state in submission['_links']:
@@ -156,16 +169,15 @@ class IngestApi:
         return self.url + "/" + assayCallbackLink
 
     def getAssay(self, assayUrl):
-        r = requests.get(assayUrl, headers=self.headers)
+        r = s.get(assayUrl, headers=self.headers)
         if r.status_code == requests.codes.ok:
             return r.json()
-
 
     def getAnalyses(self, submissionUrl):
         return self.getEntities(submissionUrl, "analyses")
 
     def getEntities(self, submissionUrl, entityType):
-        r = requests.get(submissionUrl, headers=self.headers)
+        r = s.get(submissionUrl, headers=self.headers)
         if r.status_code == requests.codes.ok:
             if entityType in json.loads(r.text)["_links"]:
                 # r2 = requests.get(, headers=self.headers)
@@ -177,7 +189,7 @@ class IngestApi:
         if pageSize:
             params = {"size": pageSize}
 
-        r = requests.get(url, headers=self.headers, params=params)
+        r = s.get(url, headers=self.headers, params=params)
         if r.status_code == requests.codes.ok:
             if "_embedded" in json.loads(r.text):
                 for entity in json.loads(r.text)["_embedded"][entityType]:
@@ -221,7 +233,7 @@ class IngestApi:
             "fileName": fileName,
             "content": json.loads(jsonObject)
         }
-        r = requests.post(submissionUrl, data=json.dumps(fileToCreateObject),
+        r = s.post(submissionUrl, data=json.dumps(fileToCreateObject),
                           headers=self.headers)
         if r.status_code == requests.codes.created or r.status_code == requests.codes.accepted:
             return json.loads(r.text)
@@ -232,10 +244,11 @@ class IngestApi:
         auth_headers = {'Content-type': 'application/json',
                         'Authorization': token
                         }
+
         submissionUrl = self.submission_links[submissionUrl][entityType]['href'].rsplit("{")[0]
 
         self.logger.debug("posting " + submissionUrl)
-        r = requests.post(submissionUrl, data=jsonObject,
+        r = s.post(submissionUrl, data=jsonObject,
                           headers=auth_headers)
         if r.status_code == requests.codes.created or r.status_code == requests.codes.accepted:
             return json.loads(r.text)
@@ -248,7 +261,7 @@ class IngestApi:
         raise ValueError('Can\'t get id for ' + json.dumps(entity) + ' is it a HCA entity?')
 
     def getObjectUuid(self, entityUri):
-        r = requests.get(entityUri,
+        r = s.get(entityUri,
                          headers=self.headers)
         if r.status_code == requests.codes.ok:
             return json.loads(r.text)["uuid"]["uuid"]
@@ -273,7 +286,8 @@ class IngestApi:
         if not fromEntityLinksRelationship:
             raise ValueError("Error: fromEntityLinks has no {0} relationship".format(relationship))
 
-        fromEntityLinksRelationshipHref = fromEntityLinksRelationship["href"] if "href" in fromEntityLinksRelationship else None
+        fromEntityLinksRelationshipHref = fromEntityLinksRelationship[
+            "href"] if "href" in fromEntityLinksRelationship else None
         if not fromEntityLinksRelationshipHref:
             raise ValueError("Error: fromEntityLinksRelationship for relationship {0} has no href".format(relationship))
 
@@ -287,7 +301,7 @@ class IngestApi:
 
         headers = {'Content-type': 'text/uri-list'}
 
-        r = requests.post(fromUri.rsplit("{")[0],
+        r = s.post(fromUri.rsplit("{")[0],
                           data=toUri.rsplit("{")[0], headers=headers)
 
         return r
@@ -298,7 +312,7 @@ class IngestApi:
         if tries < max_retries:
             self.logger.info("no of tries: " + str(tries + 1))
             r = None
-            
+
             try:
                 r = func(*args)
                 r.raise_for_status()
@@ -327,31 +341,21 @@ class IngestApi:
             self.logger.error(error_message)
             return None
 
-    def _request_post(self, url, data, params, headers):
-        if params:
-            return requests.post(url, data=data, params=params, headers=headers)
-
-        return requests.post(url, data=data, headers=headers)
-
-    def _request_put(self, url, data, params, headers):
-        if params:
-            return requests.put(url, data=data, params=params, headers=headers)
-
-        return requests.put(url, data=data, headers=headers)
-
     def createBundleManifest(self, bundleManifest):
-        r = self._retry_when_http_error(0, self._post_bundle_manifest, bundleManifest, self.ingest_api["bundleManifests"]["href"].rsplit("{")[0])
+        r = self._retry_when_http_error(0, self._post_bundle_manifest, bundleManifest,
+                                        self.ingest_api["bundleManifests"]["href"].rsplit("{")[0])
 
         if not (200 <= r.status_code < 300):
-            error_message = "Failed to create bundle manifest at URL {0} with request payload: {1}".format(self.ingest_api["bundleManifests"]["href"].rsplit("{")[0],
-                                                                                                           json.dumps(bundleManifest.__dict__))
+            error_message = "Failed to create bundle manifest at URL {0} with request payload: {1}".format(
+                self.ingest_api["bundleManifests"]["href"].rsplit("{")[0],
+                json.dumps(bundleManifest.__dict__))
             self.logger.error(error_message)
             raise ValueError(error_message)
         else:
             self.logger.info("successfully created bundle manifest")
 
     def _post_bundle_manifest(self, bundleManifest, url):
-        return requests.post(url, data=json.dumps(bundleManifest.__dict__), headers=self.headers)
+        return s.post(url, data=json.dumps(bundleManifest.__dict__), headers=self.headers)
 
     def updateSubmissionWithStagingCredentials(self, subUrl, uuid, submissionCredentials):
         stagingDetails = \
@@ -374,7 +378,7 @@ class IngestApi:
     def retrySubmissionUpdateWithStagingDetails(self, subUrl, stagingDetails, tries):
         if tries < 5:
             # do a GET request to get latest submission envelope
-            entity_response = requests.get(subUrl)
+            entity_response = s.get(subUrl)
             etag = entity_response.headers['ETag']
             if etag:
                 # set the etag header so we get 412 if someone beats us to set validating
