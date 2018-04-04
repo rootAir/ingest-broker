@@ -113,7 +113,7 @@ class IngestExporter:
 
 
     def generateTestAssayBundle(self, envelopeUuidForAssay, assayUrl):
-
+        bundleUuid = None
         # check staging area is available
         if self.dryrun or self.staging_api.hasStagingArea(envelopeUuidForAssay):
             assay = self.ingest_api.getAssay(assayUrl)
@@ -125,13 +125,13 @@ class IngestExporter:
             self.logger.error("Can\'t do export as no staging area has been created")
 
     def generateAssayBundle(self, newAssayMessage):
-        success = False
+        savedBundleUuid = None
         assayCallbackLink = newAssayMessage["callbackLink"]
 
         self.logger.info('assay received '+ assayCallbackLink)
         self.logger.info('assay index: '+ str(newAssayMessage["assayIndex"]) + ', total assays: ' + str(newAssayMessage["totalAssays"]))
 
-    # given an assay, generate a bundle
+        # given an assay, generate a bundle
 
         assayUrl = self.ingest_api.getAssayUrl(assayCallbackLink)
         assayUuid = newAssayMessage["documentUuid"]
@@ -142,14 +142,16 @@ class IngestExporter:
             assay = self.ingest_api.getAssay(assayUrl)
 
             self.logger.info("Attempting to export primary assay bundle to DSS...")
-            success = self.primarySubmission(envelopeUuidForAssay, assay)
+            savedBundleUuid = self.primarySubmission(envelopeUuidForAssay, assay)
         else:
             error_message = "Can\'t do export as no staging area has been created"
             self.logger.error(error_message)
             raise ValueError(error_message)
 
-        if not success:
+        if not savedBundleUuid:
             raise ValueError("An error occured in primary submission. Failed to export to dss: "+newAssayMessage["callbackLink"])
+
+        return savedBundleUuid
 
     def secondarySubmission(self, submissionEnvelopeUuid, analyses):
         # list of FileDescriptors for files we need to transfer to the DSS before creating the bundle
@@ -184,8 +186,8 @@ class IngestExporter:
             analysisFileName = "analysis_0.json" # TODO: shouldn't be hardcoded
 
             analysisBundleContent["core"] = {"type": "analysis_bundle",
-                                            "schema_url": self.schema_url + "analysis_bundle.json",
-                                            "schema_version": self.schema_version}
+                                             "schema_url": self.schema_url + "analysis_bundle.json",
+                                             "schema_version": self.schema_version}
 
             bundleManifest.fileAnalysisMap = { analysisDssUuid : [analysisUuid] }
 
@@ -227,7 +229,7 @@ class IngestExporter:
 
 
     def primarySubmission(self, submissionEnvelopeUuid, assay):
-        success = False
+        savedBundleUuid = None
         # we only want to upload one version of each file so must track through each bundle files that are the same e.g. project and possibly protocols or samples
 
         projectUuidToBundleData = {}
@@ -316,10 +318,10 @@ class IngestExporter:
 
         # create a stub for the file bundle
         fileBundle = {
-                'describedBy': 'https://schema.humancellatlas.org/bundle/1.0.0/file',
-                'schema_version': '1.0.0',
-                'schema_type': 'file_bundle',
-                'files': []
+            'describedBy': 'https://schema.humancellatlas.org/bundle/1.0.0/file',
+            'schema_version': '1.0.0',
+            'schema_type': 'file_bundle',
+            'files': []
         }
 
         # create a stub for the protocol bundle
@@ -421,7 +423,7 @@ class IngestExporter:
                                 # link the samples
 
                             links.append(self.getLinks("biomaterial", donor["uuid"]["uuid"], process_name,
-                                          specimenProcess["uuid"]["uuid"]))
+                                                       specimenProcess["uuid"]["uuid"]))
 
                             # get and relevant protocols
                             for protocol in list(
@@ -507,8 +509,8 @@ class IngestExporter:
 
                 # link the assay to the files
                 links.append(
-                self.getLinks(process_type, assayUuid, "file",
-                              fileUuid))
+                    self.getLinks(process_type, assayUuid, "file",
+                                  fileUuid))
 
             # push protocols to dss
 
@@ -562,7 +564,7 @@ class IngestExporter:
 
         if not self.dryrun:
             bundlefileDescription = self.writeMetadataToStaging(submissionEnvelopeUuid,
-                protocolBundleFileName, protocolBundle, '"metadata/protocol"')
+                                                                protocolBundleFileName, protocolBundle, '"metadata/protocol"')
             allBundleFilesToSubmit.append({
                 "name": protocolBundleFileName,
                 "submittedName": "protocol.json",
@@ -586,7 +588,7 @@ class IngestExporter:
                 self.logger.info("Protocol entity " + protocolDssUuid + " is not valid")
                 self.logger.info(valid)
             self.dumpJsonToFile(protocolBundle, project_bundle["content"]["project_core"]["project_shortname"],
-                "protocol_bundle")
+                                "protocol_bundle")
 
         bundleManifest.fileProtocolMap = {protocolDssUuid: allProtocolUuids}
 
@@ -622,7 +624,7 @@ class IngestExporter:
                 self.logger.info("Link entity " + linksDssUuid + " is not valid")
                 self.logger.info(valid)
             self.dumpJsonToFile(linksBundle, project_bundle["content"]["project_core"]["project_shortname"],
-                "links_bundle")
+                                "links_bundle")
 
         self.logger.info("All files staged...")
 
@@ -632,14 +634,14 @@ class IngestExporter:
             self.dss_api.createBundle(bundleManifest.bundleUuid, allBundleFilesToSubmit)
             # write bundle manifest to ingest API
             self.ingest_api.createBundleManifest(bundleManifest)
-            success = True
+            savedBundleUuid = bundleManifest.bundleUuid
         else:
             self.dumpJsonToFile(bundleManifest.__dict__, project_bundle["content"]["project_core"]["project_shortname"], "bundleManifest" )
-            success = True
+            savedBundleUuid = bundleManifest.bundleUuid
 
         self.logger.info("bundles generated! "+bundleManifest.bundleUuid)
 
-        return success
+        return savedBundleUuid
 
 
 
@@ -665,8 +667,8 @@ class IngestExporter:
         return fileDescription
 
     def deleteStagingArea(self, stagingAreaId):
-      self.logger.info("deleting staging area...." + stagingAreaId)
-      self.staging_api.deleteStagingArea(stagingAreaId)
+        self.logger.info("deleting staging area...." + stagingAreaId)
+        self.staging_api.deleteStagingArea(stagingAreaId)
 
     def bundleSample(self, sample_entity):
         sample_copy = self._copyAndTrim(sample_entity)
