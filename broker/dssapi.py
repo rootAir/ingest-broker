@@ -77,7 +77,7 @@ class DssApi:
             hca_client.put_bundle(
                 uuid=bundleUuid,
                 version=version,
-                replica="aws"
+                replica="aws",
                 files=bundleFile["files"],
                 creator_uid=bundleFile["creator_uid"]
             )
@@ -151,7 +151,7 @@ class DssApi:
             hca_client.put_bundle(
                 uuid=analysisBundleUuid,
                 version=version,
-                replica="aws"
+                replica="aws",
                 files=bundleCreatePayload["files"],
                 creator_uid=bundleCreatePayload["creator_uid"]
             )
