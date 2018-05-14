@@ -1,12 +1,12 @@
 from unittest import TestCase
 
 from flask import json
-from mock import patch
+from unittest.mock import patch
 
 from broker import broker_app
 from broker.broker_app import app
-from broker.hcaxlsbroker import SpreadsheetSubmission
-from broker.ingestapi import IngestApi
+from ingest.importer.hcaxlsbroker import SpreadsheetSubmission
+from ingest.api.ingestapi import IngestApi
 
 
 class BrokerAppTest(TestCase):

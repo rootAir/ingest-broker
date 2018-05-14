@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from spreadsheetUploadError import SpreadsheetUploadError
+from ingest.importer.spreadsheetUploadError import SpreadsheetUploadError
 
 __author__ = "jupp"
 __license__ = "Apache 2.0"
@@ -7,16 +7,15 @@ __license__ = "Apache 2.0"
 from flask import Flask, Markup, flash, request, render_template, redirect, url_for
 from flask_cors import CORS, cross_origin
 from flask import json
-from hcaxlsbroker import SpreadsheetSubmission
-from ingestapi import IngestApi
-# from stagingapi import StagingApi
+from ingest.importer.hcaxlsbroker import SpreadsheetSubmission
+from ingest.api.ingestapi import IngestApi
 from werkzeug.utils import secure_filename
 import os, sys
 import tempfile
 import threading
 import logging
 import traceback
-import token_util as token_util
+import ingest.utils.token_util as token_util
 
 STATUS_LABEL = {
     'Valid': 'label-success',
