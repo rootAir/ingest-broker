@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/HumanCellAtlas/ingest-client.svg?branch=master)](https://travis-ci.org/HumanCellAtlas/ingest-broker)
+[![Maintainability](https://api.codeclimate.com/v1/badges/c3cb9256f7e92537fa99/maintainability)](https://codeclimate.com/github/HumanCellAtlas/ingest-broker/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/c3cb9256f7e92537fa99/test_coverage)](https://codeclimate.com/github/HumanCellAtlas/ingest-broker/test_coverage)
 [![Docker Repository on Quay](https://quay.io/repository/humancellatlas/ingest-demo/status "Docker Repository on Quay")](https://quay.io/repository/humancellatlas/ingest-demo)
 
 # HCA Ingest Broker
