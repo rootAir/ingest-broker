@@ -70,7 +70,7 @@ class BrokerAppTest(TestCase):
 
             # and:
             submission_id = '63fde9'
-            submission_url = "https://sample.com/submission/%s" % (submission_id)
+            submission_url = "https://sample.com/submission/%s" % submission_id
             create_submission.return_value = submission_url
 
             # given:
