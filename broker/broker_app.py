@@ -50,8 +50,8 @@ def upload_spreadsheet():
         path = _save_spreadsheet()
         ingest_api = IngestApi()
         importer = IngestImporter(ingest_api)
-        submission_url = ingest_api.createSubmission(token)
         _attempt_dry_run(importer, path)
+        submission_url = ingest_api.createSubmission(token)
         _submit_spreadsheet_data(importer, path, submission_url)
         return create_upload_success_response(submission_url)
     except SpreadsheetUploadError as spreadsheetUploadError:
