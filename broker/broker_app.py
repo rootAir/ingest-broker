@@ -44,55 +44,11 @@ logger = logging.getLogger(__name__)
 def upload_spreadsheet():
     try:
         logger.info("Uploading spreadsheet")
-
-        # check token
-        logger.info("Checking token")
-        token = request.headers.get('Authorization')
-        if token is None:
-            raise SpreadsheetUploadError(401, "An authentication token must be supplied when uploading a spreadsheet",
-                                         "")
-
-        # save file
-        logger.info("Saving file")
-        try:
-            path = _save_file()
-        except Exception as err:
-            logger.error(traceback.format_exc())
-            message = "We experienced a problem when saving your spreadsheet"
-            raise SpreadsheetUploadError(500, message, str(err))
-
-        # check for project_id
-        logger.info("Checking for project_id")
-        project_id = None
-
-        if 'project_id' in request.form:
-            project_id = request.form['project_id']
-            logger.info("Found project_id: " + project_id)
-        else:
-            logger.info("No existing project_id found")
-
-        # do a dry run to minimally validate spreadsheet
-        logger.info("Attempting dry run to validate spreadsheet")
-        try:
-            submission = SpreadsheetSubmission(dry=True)
-            submission.submit(path, None, None, project_id)
-        except ValueError as err:
-            logger.error(traceback.format_exc())
-            message = "There was a problem validating your spreadsheet"
-            raise SpreadsheetUploadError(400, message, str(err))
-        except KeyError as err:
-            logger.error(traceback.format_exc())
-            message = "There was a problem with the content of your spreadsheet"
-            raise SpreadsheetUploadError(400, message, str(err))
-
-        # if we get here can go ahead and submit
-        logger.info("Attempting submission")
-        submission.dryrun = False
-        submission_url = submission.createSubmission(token)
-        thread = threading.Thread(target=submission.submit, args=(path, submission_url, token, project_id))
-        thread.start()
-
-        logger.info("Spreadsheet upload completed")
+        token = _check_token()
+        path = _save_spreadsheet()
+        project_id = _check_for_project()
+        submission = _attempt_dry_run(path, project_id)
+        submission_url = _submit_spreadsheet_data(path, project_id, submission, token)
         return create_upload_success_response(submission_url)
     except SpreadsheetUploadError as spreadsheetUploadError:
         return create_upload_failure_response(spreadsheetUploadError.http_code, spreadsheetUploadError.message,
@@ -101,6 +57,63 @@ def upload_spreadsheet():
         logger.error(traceback.format_exc())
         return create_upload_failure_response(500, "We experienced a problem while uploading your spreadsheet",
                                               str(err))
+
+
+def _submit_spreadsheet_data(path, project_id, submission, token):
+    logger.info("Attempting submission")
+    submission.dryrun = False
+    submission_url = submission.createSubmission(token)
+    thread = threading.Thread(target=submission.submit, args=(path, submission_url, token, project_id))
+    thread.start()
+    logger.info("Spreadsheet upload completed")
+    return submission_url
+
+
+def _attempt_dry_run(path, project_id):
+    logger.info("Attempting dry run to validate spreadsheet")
+    try:
+        submission = SpreadsheetSubmission(dry=True)
+        submission.submit(path, None, None, project_id)
+    except ValueError as err:
+        logger.error(traceback.format_exc())
+        message = "There was a problem validating your spreadsheet"
+        raise SpreadsheetUploadError(400, message, str(err))
+    except KeyError as err:
+        logger.error(traceback.format_exc())
+        message = "There was a problem with the content of your spreadsheet"
+        raise SpreadsheetUploadError(400, message, str(err))
+    return submission
+
+
+def _check_for_project():
+    logger.info("Checking for project_id")
+    project_id = None
+    if 'project_id' in request.form:
+        project_id = request.form['project_id']
+        logger.info("Found project_id: " + project_id)
+    else:
+        logger.info("No existing project_id found")
+    return project_id
+
+
+def _save_spreadsheet():
+    logger.info("Saving file")
+    try:
+        path = _save_file()
+    except Exception as err:
+        logger.error(traceback.format_exc())
+        message = "We experienced a problem when saving your spreadsheet"
+        raise SpreadsheetUploadError(500, message, str(err))
+    return path
+
+
+def _check_token():
+    logger.info("Checking token")
+    token = request.headers.get('Authorization')
+    if token is None:
+        raise SpreadsheetUploadError(401, "An authentication token must be supplied when uploading a spreadsheet",
+                                     "")
+    return token
 
 
 def _save_file():
