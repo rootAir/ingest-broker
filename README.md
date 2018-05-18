@@ -42,20 +42,3 @@ docker run -p 5000:5000 -e INGEST_API=http://api.ingest.dev.data.humancellatlas.
 ```
 
 The application will be available at http://localhost:5000
-
-# CLI application 
-
-
-## Spreadsheet converter 
- 
-This script will submit a HCA spreadsheet to the Ingest API. 
-
-```
-python broker/hcaxlsbroker.py -p <path to excel file>
-```
-
-If you want to do a dry run to check the spreadsheet parses without submitting use the -d argument 
-
-```
-python broker/hcaxlsbroker.py -d -p <path to excel file>
-```
