@@ -9,6 +9,8 @@ from flask_cors import CORS, cross_origin
 from flask import json
 from ingest.importer.hcaxlsbroker import SpreadsheetSubmission
 from ingest.api.ingestapi import IngestApi
+from ingest.importer.importer import IngestImporter
+
 from werkzeug.utils import secure_filename
 import os
 import sys
@@ -46,9 +48,11 @@ def upload_spreadsheet():
         logger.info("Uploading spreadsheet")
         token = _check_token()
         path = _save_spreadsheet()
-        project_id = _check_for_project()
-        submission = _attempt_dry_run(path, project_id)
-        submission_url = _submit_spreadsheet_data(path, project_id, submission, token)
+        ingest_api = IngestApi()
+        importer = IngestImporter(ingest_api)
+        submission_url = ingest_api.createSubmission(token)
+        _attempt_dry_run(importer, path)
+        _submit_spreadsheet_data(importer, path, submission_url)
         return create_upload_success_response(submission_url)
     except SpreadsheetUploadError as spreadsheetUploadError:
         return create_upload_failure_response(spreadsheetUploadError.http_code, spreadsheetUploadError.message,
@@ -59,30 +63,22 @@ def upload_spreadsheet():
                                               str(err))
 
 
-def _submit_spreadsheet_data(path, project_id, submission, token):
+def _submit_spreadsheet_data(importer, path, submission_url):
     logger.info("Attempting submission")
-    submission.dryrun = False
-    submission_url = submission.createSubmission(token)
-    thread = threading.Thread(target=submission.submit, args=(path, submission_url, token, project_id))
+    thread = threading.Thread(target=importer.import_spreadsheet, args=(path, submission_url, False))
     thread.start()
     logger.info("Spreadsheet upload completed")
     return submission_url
 
 
-def _attempt_dry_run(path, project_id):
+def _attempt_dry_run(importer, path):
     logger.info("Attempting dry run to validate spreadsheet")
     try:
-        submission = SpreadsheetSubmission(dry=True)
-        submission.submit(path, None, None, project_id)
-    except ValueError as err:
+        importer.import_spreadsheet(path, None, dry_run=True)
+    except Exception as err:
         logger.error(traceback.format_exc())
         message = "There was a problem validating your spreadsheet"
         raise SpreadsheetUploadError(400, message, str(err))
-    except KeyError as err:
-        logger.error(traceback.format_exc())
-        message = "There was a problem with the content of your spreadsheet"
-        raise SpreadsheetUploadError(400, message, str(err))
-    return submission
 
 
 def _check_for_project():
