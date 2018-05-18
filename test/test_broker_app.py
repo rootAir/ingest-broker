@@ -47,8 +47,8 @@ class BrokerAppTest(TestCase):
             self.assertEqual(400, response.status_code)
 
     def test_key_error_on_spreadsheet_submission(self):
-        with patch.object(broker_app, '_save_file') as save_file, \
-                patch.object(SpreadsheetSubmission, 'submit') as submit_spreadsheet:
+        with patch.object(broker_app, '_save_file') as save_file, patch.object(SpreadsheetSubmission,
+                                                                               'submit') as submit_spreadsheet:
             # given:
             save_file.return_value = 'path/to/file.xls'
             submit_spreadsheet.side_effect = KeyError("key error")
@@ -61,8 +61,8 @@ class BrokerAppTest(TestCase):
 
     def test_submission_successful(self):
         with patch.object(broker_app, '_save_file') as save_file, \
-                patch.object(SpreadsheetSubmission, 'submit') as submit_spreadsheet, \
-                patch.object(SpreadsheetSubmission, 'createSubmission') as create_submission, \
+                patch.object(SpreadsheetSubmission, 'submit') as submit_spreadsheet, patch.object(SpreadsheetSubmission,
+                                                                                                  'createSubmission') as create_submission, \
                 patch.object(IngestApi, '__init__') as init_ingest_api, \
                 patch.object(IngestApi, 'getObjectUuid') as get_object_uuid:
             # given:
