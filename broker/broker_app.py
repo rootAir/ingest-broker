@@ -7,7 +7,6 @@ __license__ = "Apache 2.0"
 from flask import Flask, flash, request, render_template, redirect, url_for
 from flask_cors import CORS, cross_origin
 from flask import json
-from ingest.importer.hcaxlsbroker import SpreadsheetSubmission
 from ingest.api.ingestapi import IngestApi
 from ingest.importer.importer import IngestImporter
 
