@@ -48,6 +48,7 @@ def upload_spreadsheet():
         token = _check_token()
         path = _save_spreadsheet()
         ingest_api = IngestApi()
+        ingest_api.set_token(token)
         importer = IngestImporter(ingest_api)
         _attempt_dry_run(importer, path)
         submission_url = ingest_api.createSubmission(token)
