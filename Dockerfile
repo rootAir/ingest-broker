@@ -16,6 +16,10 @@ WORKDIR /app
 
 RUN pip install -r /app/requirements.txt
 
+RUN apk update && \
+    apk add git && \
+    pip install -e "git+https://github.com/HumanCellAtlas/ingest-client.git#egg=hca_ingest"
+
 RUN apk del gcc
 
 ENV INGEST_API=http://localhost:8080
