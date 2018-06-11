@@ -8,7 +8,7 @@ from flask import Flask, flash, request, render_template, redirect, url_for
 from flask_cors import CORS, cross_origin
 from flask import json
 from ingest.api.ingestapi import IngestApi
-from ingest.importer.importer import IngestImporter
+from ingest.importer.importer import XlsImporter
 
 from werkzeug.utils import secure_filename
 import os
@@ -49,10 +49,20 @@ def upload_spreadsheet():
         path = _save_spreadsheet()
         ingest_api = IngestApi()
         ingest_api.set_token(token)
-        importer = IngestImporter(ingest_api)
-        _attempt_dry_run(importer, path)
+        importer = XlsImporter(ingest_api)
+
+        project = _check_for_project(ingest_api)
+
+        project_uuid = None
+        if project and project.get('uuid'):
+            project_uuid = project.get('uuid').get('uuid')
+
+        _attempt_dry_run(importer, path, project_uuid)
+
         submission_url = ingest_api.createSubmission(token)
-        _submit_spreadsheet_data(importer, path, submission_url)
+
+        _submit_spreadsheet_data(importer, path, submission_url, project_uuid)
+
         return create_upload_success_response(submission_url)
     except SpreadsheetUploadError as spreadsheetUploadError:
         return create_upload_failure_response(spreadsheetUploadError.http_code, spreadsheetUploadError.message,
@@ -63,33 +73,39 @@ def upload_spreadsheet():
                                               str(err))
 
 
-def _submit_spreadsheet_data(importer, path, submission_url):
+def _submit_spreadsheet_data(importer, path, submission_url, project_uuid):
+
     logger.info("Attempting submission")
-    thread = threading.Thread(target=importer.import_spreadsheet, args=(path, submission_url, False))
+    thread = threading.Thread(target=importer.import_file, args=(path, submission_url, project_uuid))
     thread.start()
     logger.info("Spreadsheet upload completed")
     return submission_url
 
 
-def _attempt_dry_run(importer, path):
+def _attempt_dry_run(importer, path, project_uuid=None):
     logger.info("Attempting dry run to validate spreadsheet")
     try:
-        importer.import_spreadsheet(path, None, dry_run=True)
+        importer.dry_run_import_file(path, project_uuid=project_uuid)
     except Exception as err:
         logger.error(traceback.format_exc())
         message = "There was a problem validating your spreadsheet"
         raise SpreadsheetUploadError(400, message, str(err))
 
 
-def _check_for_project():
+def _check_for_project(ingest_api):
     logger.info("Checking for project_id")
-    project_id = None
+    project = None
     if 'project_id' in request.form:
         project_id = request.form['project_id']
         logger.info("Found project_id: " + project_id)
+
+        project = ingest_api.getProjectById(project_id)
+
     else:
         logger.info("No existing project_id found")
-    return project_id
+
+    return project
+
 
 
 def _save_spreadsheet():
