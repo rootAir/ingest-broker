@@ -12,3 +12,6 @@ class SubmissionSummary:
         self.file_summary = SubmissionSummary.EntitySummary()
         self.project_summary = SubmissionSummary.EntitySummary()
 
+        self.submission_status = None
+        self.create_date = None
+        self.last_updated_date = None
