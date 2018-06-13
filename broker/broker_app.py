@@ -9,6 +9,7 @@ from flask_cors import CORS, cross_origin
 from flask import json
 from ingest.api.ingestapi import IngestApi
 from ingest.importer.importer import XlsImporter
+from broker.service.summary_service import SummaryService, SubmissionSummary
 
 from werkzeug.utils import secure_filename
 import os
@@ -71,6 +72,17 @@ def upload_spreadsheet():
         logger.error(traceback.format_exc())
         return create_upload_failure_response(500, "We experienced a problem while uploading your spreadsheet",
                                               str(err))
+
+
+@app.route('/submissions/<submission_uuid>/summary', methods=['GET'])
+def submission_summary(submission_uuid):
+    summary = SummaryService().summary_for_submission(submission_uuid)
+
+    return app.response_class(
+        response=json.dumps(summary),
+        status=201,
+        mimetype='application/json'
+    )
 
 
 def _submit_spreadsheet_data(importer, path, submission_url, project_uuid):
