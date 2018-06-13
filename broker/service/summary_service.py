@@ -43,7 +43,7 @@ class SummaryService:
         return self.generate_summary_for_entity(submission_uri, 'processes')
 
     def get_entities_in_submission(self, submission_uri, entity_type) -> Generator[dict, None, None]:
-        return self.ingestapi.getEntities(submission_uri, entity_type)
+        yield from self.ingestapi.getEntities(submission_uri, entity_type)
 
     def generate_summary_for_entity(self, submission_uri, entity_type) -> SubmissionSummary.EntitySummary:
         """
