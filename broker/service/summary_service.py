@@ -5,8 +5,8 @@ from typing import Generator
 
 class SummaryService:
 
-    def __init__(self):
-        self.ingestapi = IngestApi()
+    def __init__(self, ingest_api=None):
+        self.ingestapi = IngestApi() if not ingest_api else ingest_api
 
     def summary_for_submission(self, submission_uri) -> SubmissionSummary:
         """
@@ -24,22 +24,22 @@ class SummaryService:
         return submission_summary
 
 
-    def generate_biomaterial_summary(self, submission_uri):
+    def generate_biomaterial_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
         return dict()
 
-    def generate_project_summary(self, submission_uri):
+    def generate_project_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
         return dict()
 
-    def generate_protocol_summary(self, submission_uri):
+    def generate_protocol_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
         return dict()
 
-    def generate_file_summary(self, submission_uri):
+    def generate_file_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
         return dict()
 
-    def generate_process_summary(self, submission_uri):
+    def generate_process_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
         return dict()
 
-    def get_entities_in_submission(self, submission_uri, entity_type) -> Generator[dict]:
+    def get_entities_in_submission(self, submission_uri, entity_type) -> Generator[dict, None, None]:
         return self.ingestapi.getEntities(submission_uri, entity_type)
 
     def generate_summary_for_entity(self, submission_uri, entity_type) -> SubmissionSummary.EntitySummary:
