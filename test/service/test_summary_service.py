@@ -24,7 +24,15 @@ class SummaryServiceTest(TestCase):
     def test_generate_submission_summary(self):
         mock_ingest_api = patch('__main__.IngestApi')
         mock_envelope_uri = 'http://mock-ingest-api/envelopes/mock-envelope-id'
-        mock_envelope_resource = {'_links': {'self': {'href': mock_envelope_uri}}}
+        mock_envelope_submission_date =  '2018-03-22T10:01:48.290Z'
+        mock_envelope_update_date = '2018-03-22T10:02:45.224Z'
+        mock_envelope_status = "PROCESSING"
+
+        mock_envelope_resource = dict()
+        mock_envelope_resource['_links'] = {'self': {'href': mock_envelope_uri}}
+        mock_envelope_resource['submissionDate'] = mock_envelope_submission_date
+        mock_envelope_resource['updateDate'] = mock_envelope_update_date
+        mock_envelope_resource['submissionState'] = mock_envelope_status
 
         summary_service = SummaryService(mock_ingest_api)
         with patch('broker.service.summary_service.SummaryService.get_entities_in_submission') as mock_get_entities_in_submission:
@@ -61,6 +69,10 @@ class SummaryServiceTest(TestCase):
 
             assert submission_summary.protocol_summary.count == 10
             assert 'specific-protocol' in submission_summary.protocol_summary.breakdown
+
+            assert submission_summary.submission_status == mock_envelope_status
+            assert submission_summary.create_date == mock_envelope_submission_date
+            assert submission_summary.last_updated_date == mock_envelope_update_date
 
     @staticmethod
     def generate_mock_entities(count, specific_type):

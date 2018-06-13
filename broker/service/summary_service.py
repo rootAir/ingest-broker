@@ -26,6 +26,10 @@ class SummaryService:
         submission_summary.file_summary = self.generate_file_summary(submission_uri)
         submission_summary.process_summary = self.generate_process_summary(submission_uri)
 
+        submission_summary.create_date = submission_resource['submissionDate']
+        submission_summary.last_updated_date = submission_resource['updateDate']
+        submission_summary.submission_status = submission_resource['submissionState']
+
         return submission_summary
 
     def generate_biomaterial_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
