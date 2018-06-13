@@ -35,6 +35,9 @@ class SummaryService:
     def generate_process_summary(self, submission_uri):
         return dict()
 
+    def get_entities_in_submission(self, submission_uri, entity_type):
+        return self.ingestapi.getEntities(submission_uri, entity_type)
+
     def generate_summary_for_entity(self, submission_uri, entity_type):
         """
         given a core entity type of the ingest API (i.e biomaterial, protocol, process, ...), and a submission,
@@ -49,7 +52,7 @@ class SummaryService:
         entity_summary['breakdown'] = dict()
 
         entity_specific_types = dict()
-        entities = self.ingestapi.getEntities(submission_uri, entity_type)
+        entities = self.get_entities_in_submission(submission_uri, entity_type)
         for entity in entities:
             specific_type = self.parse_specific_entity_type(entity)
             if specific_type not in entity_specific_types:
