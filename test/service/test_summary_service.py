@@ -24,6 +24,7 @@ class SummaryServiceTest(TestCase):
     def test_generate_submission_summary(self):
         mock_ingest_api = patch('__main__.IngestApi')
         mock_envelope_uri = 'http://mock-ingest-api/envelopes/mock-envelope-id'
+        mock_envelope_resource = {'_links': {'self': {'href': mock_envelope_uri}}}
 
         summary_service = SummaryService(mock_ingest_api)
         with patch('broker.service.summary_service.SummaryService.get_entities_in_submission') as mock_get_entities_in_submission:
@@ -44,7 +45,7 @@ class SummaryServiceTest(TestCase):
                     yield
 
             mock_get_entities_in_submission.side_effect = get_entities_in_submission_mock
-            submission_summary = summary_service.summary_for_submission(mock_envelope_uri)
+            submission_summary = summary_service.summary_for_submission(mock_envelope_resource)
             
             assert submission_summary.process_summary.count == 10
             assert 'specific-process' in submission_summary.process_summary.breakdown

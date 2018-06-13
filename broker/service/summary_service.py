@@ -8,7 +8,7 @@ class SummaryService:
     def __init__(self, ingest_api=None):
         self.ingestapi = IngestApi() if not ingest_api else ingest_api
 
-    def summary_for_submission(self, submission_uri) -> SubmissionSummary:
+    def summary_for_submission(self, submission_resource) -> SubmissionSummary:
         """
         Given a submission URI, returns a detailed summary of the submission i.e the amount of each entity type in the
         submission(i.e biomaterial, file, protocol, ...), further broken down by entity type (e.g donor, tissue, cell
@@ -18,6 +18,7 @@ class SummaryService:
         :return: A SubmissionSummary for this submission
         """
         submission_summary = SubmissionSummary()
+        submission_uri = submission_resource['_links']['self']['href']
 
         submission_summary.biomaterial_summary = self.generate_biomaterial_summary(submission_uri)
         submission_summary.project_summary = self.generate_project_summary(submission_uri)

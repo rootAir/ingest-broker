@@ -76,8 +76,8 @@ def upload_spreadsheet():
 
 @app.route('/submissions/<submission_uuid>/summary', methods=['GET'])
 def submission_summary(submission_uuid):
-    submission_uri = IngestApi().getSubmissionByUuid(submission_uuid)
-    summary = SummaryService().summary_for_submission(submission_uri)
+    submission = IngestApi().getSubmissionByUuid(submission_uuid)
+    summary = SummaryService().summary_for_submission(submission)
 
     return app.response_class(
         response=json.dumps(summary),
