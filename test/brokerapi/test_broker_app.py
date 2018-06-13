@@ -1,9 +1,8 @@
 from unittest import TestCase
 from unittest.mock import patch
 
-from broker import broker_app
-from broker.broker_app import app
-
+from brokerapi import broker_app
+from brokerapi.broker_app import app
 
 class BrokerAppTest(TestCase):
 
