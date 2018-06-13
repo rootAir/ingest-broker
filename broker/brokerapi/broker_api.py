@@ -274,9 +274,3 @@ def submit_envelope():
     if sub_url:
         ingest_api.finishSubmission(sub_url)
     return redirect(url_for('index'))
-
-
-if __name__ == '__main__':
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-
-    app.run(host='0.0.0.0', port=5000)
