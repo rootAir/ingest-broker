@@ -1,8 +1,7 @@
 from unittest import TestCase
 from unittest.mock import patch
 
-from service.summary_service import SummaryService
-
+from broker.service.summary_service import SummaryService
 
 class SummaryServiceTest(TestCase):
 

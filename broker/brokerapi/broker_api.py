@@ -9,7 +9,7 @@ from flask_cors import CORS, cross_origin
 from flask import json
 from ingest.api.ingestapi import IngestApi
 from ingest.importer.importer import XlsImporter
-from ..service.summary_service import SummaryService
+from broker.service.summary_service import SummaryService
 
 from werkzeug.utils import secure_filename
 import os
