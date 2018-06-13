@@ -1,8 +1,14 @@
 class SubmissionSummary:
 
+    class EntitySummary:
+        def __init__(self):
+            self.count = 0
+            self.breakdown = dict()
+
     def __init__(self):
-        self.biomaterial_summary = dict()
-        self.protocol_summary = dict()
-        self.process_summary = dict()
-        self.file_summary = dict()
-        self.project_summary = dict()
+        self.biomaterial_summary = SubmissionSummary.EntitySummary()
+        self.protocol_summary = SubmissionSummary.EntitySummary()
+        self.process_summary = SubmissionSummary.EntitySummary()
+        self.file_summary = SubmissionSummary.EntitySummary()
+        self.project_summary = SubmissionSummary.EntitySummary()
+

@@ -42,7 +42,7 @@ class SummaryService:
     def get_entities_in_submission(self, submission_uri, entity_type) -> Generator[dict]:
         return self.ingestapi.getEntities(submission_uri, entity_type)
 
-    def generate_summary_for_entity(self, submission_uri, entity_type) -> dict:
+    def generate_summary_for_entity(self, submission_uri, entity_type) -> SubmissionSummary.EntitySummary:
         """
         given a core entity type of the ingest API (i.e biomaterial, protocol, process, ...), and a submission,
         returns a detailed summary i.e each of the entity type in the envelope broken down by specific type
@@ -51,9 +51,7 @@ class SummaryService:
         :param entity_type: the type of the entity (e.g biomaterial, protocol, process, ...)
         :return: a summary with a count of each entity type, further broken down by count of each specific entity type
         """
-        entity_summary = dict()
-        entity_summary['count'] = 0
-        entity_summary['breakdown'] = dict()
+        entity_summary = SubmissionSummary.EntitySummary()
 
         entity_specific_types = dict()
         entities = self.get_entities_in_submission(submission_uri, entity_type)
@@ -63,9 +61,9 @@ class SummaryService:
                 entity_specific_types[specific_type] = {'count': 0}
 
             entity_specific_types[specific_type]['count'] += 1
-            entity_summary['count'] += 1
+            entity_summary.count += 1
 
-        entity_summary['breakdown'] = entity_specific_types
+        entity_summary.breakdown = entity_specific_types
         return entity_summary
 
     @staticmethod
