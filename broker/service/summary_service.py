@@ -20,24 +20,27 @@ class SummaryService:
         submission_summary = SubmissionSummary()
 
         submission_summary.biomaterial_summary = self.generate_biomaterial_summary(submission_uri)
+        submission_summary.project_summary = self.generate_project_summary(submission_uri)
+        submission_summary.protocol_summary = self.generate_protocol_summary(submission_uri)
+        submission_summary.file_summary = self.generate_file_summary(submission_uri)
+        submission_summary.process_summary = self.generate_process_summary(submission_uri)
 
         return submission_summary
 
-
     def generate_biomaterial_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
-        return dict()
+        return self.generate_summary_for_entity(submission_uri, 'biomaterials')
 
     def generate_project_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
-        return dict()
+        return self.generate_summary_for_entity(submission_uri, 'projects')
 
     def generate_protocol_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
-        return dict()
+        return self.generate_summary_for_entity(submission_uri, 'protocols')
 
     def generate_file_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
-        return dict()
+        return self.generate_summary_for_entity(submission_uri, 'files')
 
     def generate_process_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
-        return dict()
+        return self.generate_summary_for_entity(submission_uri, 'processes')
 
     def get_entities_in_submission(self, submission_uri, entity_type) -> Generator[dict, None, None]:
         return self.ingestapi.getEntities(submission_uri, entity_type)
