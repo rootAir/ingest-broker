@@ -1,4 +1,6 @@
 from ingest.api.ingestapi import IngestApi
+from broker.common.submission_summary import SubmissionSummary
+from typing import Generator
 
 
 class SummaryService:
@@ -6,7 +8,7 @@ class SummaryService:
     def __init__(self):
         self.ingestapi = IngestApi()
 
-    def summary_for_submission(self, submission_uri):
+    def summary_for_submission(self, submission_uri) -> SubmissionSummary:
         """
         Given a submission URI, returns a detailed summary of the submission i.e the amount of each entity type in the
         submission(i.e biomaterial, file, protocol, ...), further broken down by entity type (e.g donor, tissue, cell
@@ -18,6 +20,8 @@ class SummaryService:
         submission_summary = SubmissionSummary()
 
         submission_summary.biomaterial_summary = self.generate_biomaterial_summary(submission_uri)
+
+        return submission_summary
 
 
     def generate_biomaterial_summary(self, submission_uri):
@@ -35,10 +39,10 @@ class SummaryService:
     def generate_process_summary(self, submission_uri):
         return dict()
 
-    def get_entities_in_submission(self, submission_uri, entity_type):
+    def get_entities_in_submission(self, submission_uri, entity_type) -> Generator[dict]:
         return self.ingestapi.getEntities(submission_uri, entity_type)
 
-    def generate_summary_for_entity(self, submission_uri, entity_type):
+    def generate_summary_for_entity(self, submission_uri, entity_type) -> dict:
         """
         given a core entity type of the ingest API (i.e biomaterial, protocol, process, ...), and a submission,
         returns a detailed summary i.e each of the entity type in the envelope broken down by specific type
@@ -62,9 +66,10 @@ class SummaryService:
             entity_summary['count'] += 1
 
         entity_summary['breakdown'] = entity_specific_types
+        return entity_summary
 
     @staticmethod
-    def parse_specific_entity_type(entity):
+    def parse_specific_entity_type(entity) -> str:
         """
         given a metadata entity in ingest, returns the 'specific' entity type (e.g donor, cell_suspension,
         analysis_file, etc.)
@@ -77,13 +82,3 @@ class SummaryService:
         else:
             entity_described_by = entity['content']['describedBy']
             return entity_described_by.split('/')[-1]
-
-
-class SubmissionSummary:
-
-    def __init__(self):
-        self.biomaterial_summary = dict()
-        self.protocol_summary = dict()
-        self.process_summary = dict()
-        self.file_summary = dict()
-        self.project_summary = dict()
