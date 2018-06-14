@@ -15,6 +15,12 @@ class SummaryService:
     def summary_for_project(self, project_resource) -> ProjectSummary:
         project_summary = ProjectSummary()
 
+        project_submissions = self.get_submissions_in_project(project_resource)
+        submission_summaries = [self.summary_for_submission(submission) for submission in project_submissions]
+
+        for summary in submission_summaries:
+            project_summary.addSubmissionSummary(summary)
+
         return project_summary
 
     def summary_for_submission(self, submission_resource) -> SubmissionSummary:
@@ -58,6 +64,9 @@ class SummaryService:
 
     def get_entities_in_submission(self, submission_uri, entity_type) -> Generator[dict, None, None]:
         yield from self.ingestapi.getEntities(submission_uri, entity_type, 1000)
+
+    def get_submissions_in_project(self, project_resource) -> Generator[dict, None, None]:
+        yield from self.ingestapi.getRelatedEntities('submissionEnvelopes', project_resource, 'submissionEnvelopes')
 
     def generate_summary_for_entity(self, submission_uri, entity_type) -> EntitySummary:
         """
