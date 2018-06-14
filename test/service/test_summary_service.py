@@ -22,7 +22,7 @@ class SummaryServiceTest(TestCase):
     def test_generate_submission_summary(self):
         mock_ingest_api = patch('__main__.IngestApi')
         mock_envelope_uri = 'http://mock-ingest-api/envelopes/mock-envelope-id'
-        mock_envelope_submission_date =  '2018-03-22T10:01:48.290Z'
+        mock_envelope_submission_date = '2018-03-22T10:01:48.290Z'
         mock_envelope_update_date = '2018-03-22T10:02:45.224Z'
         mock_envelope_status = "PROCESSING"
 
@@ -31,6 +31,7 @@ class SummaryServiceTest(TestCase):
         mock_envelope_resource['submissionDate'] = mock_envelope_submission_date
         mock_envelope_resource['updateDate'] = mock_envelope_update_date
         mock_envelope_resource['submissionState'] = mock_envelope_status
+        mock_envelope_resource['uuid'] = {'uuid': 'mock-envelope-uuid'}
 
         summary_service = SummaryService(mock_ingest_api)
         with patch('broker.service.summary_service.SummaryService.get_entities_in_submission') as mock_get_entities_in_submission:
