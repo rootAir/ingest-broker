@@ -72,6 +72,73 @@ class SummaryServiceTest(TestCase):
             assert submission_summary.create_date == mock_envelope_submission_date
             assert submission_summary.last_updated_date == mock_envelope_update_date
 
+    def test_generate_project_summary(self):
+        summary_service = SummaryService()
+        mock_project_id = 'mock-project-id'
+        mock_project_resource = dict()
+        mock_project_resource['_links'] = dict()
+        mock_project_resource['_links']['envelopes'] = {'href': 'http://mock-ingest-api/projects/{0}/envelopes'.format(mock_project_id)}
+
+        with patch('broker.service.summary_service.SummaryService.get_submissions_in_project') as mock_get_project_submissions:
+            def get_submissions_in_project_mock(*args, **kwargs):
+                if args[0] == mock_project_resource:
+                    yield from self.generate_mock_submissions_in_project(10)
+                else:
+                    yield
+
+            mock_get_project_submissions.side_effect = get_submissions_in_project_mock
+
+            with patch('broker.service.summary_service.SummaryService.get_entities_in_submission') as mock_get_entities_in_submission:
+                def get_entities_in_submission_mock(*args, **kwargs):
+                    entity_type = args[1]
+
+                    type_to_mock_specific_type_map = {'processes': 'specific-process',
+                                                      'biomaterials': 'specific-biomaterial',
+                                                      'protocols': 'specific-protocol',
+                                                      'files': 'specific-file',
+                                                      'projects': 'specific-project'
+                                                      }
+
+                    yield from self.generate_mock_entities(10, type_to_mock_specific_type_map[entity_type])
+
+                mock_get_entities_in_submission.side_effect = get_entities_in_submission_mock
+
+                project_summary = summary_service.summary_for_project(mock_project_resource)
+
+                assert project_summary.file_summary.count == 100  # 10 envelopes within, each with 10 files
+                assert project_summary.process_summary.count == 100  # ...
+                assert project_summary.protocol_summary.count == 100  # ...
+                assert project_summary.biomaterial_summary.count == 100  # ...
+
+
+
+    @staticmethod
+    def generate_mock_submissions_in_project(count):
+        if not (1 <= count <= 10):
+            raise Exception("count must be between 1 and 10")
+        else:
+            for i in range(0, count):
+                mock_envelope_id = 'mock-envelope-id-{0}'.format(str(i))
+                mock_envelope_uuid = 'ffffffff-ffff-ffff-ffff-fffffffffff{0}'.format(str(i))
+                submission = dict()
+                submission['_links'] = dict()
+
+                submission['_links']['biomaterials'] = {'href': 'http://mock-ingest-api/envelopes/{0}/biomaterials'.format(mock_envelope_id)}
+                submission['_links']['files'] = {'href': 'http://mock-ingest-api/envelopes/{0}/files'.format(mock_envelope_id)}
+                submission['_links']['processes'] = {'href': 'http://mock-ingest-api/envelopes/{0}/processes'.format(mock_envelope_id)}
+                submission['_links']['protocols'] = {'href': 'http://mock-ingest-api/envelopes/{0}/protocols'.format(mock_envelope_id)}
+                submission['_links']['projects'] = {'href': 'http://mock-ingest-api/envelopes/{0}/projects'.format(mock_envelope_id)}
+                submission['_links']['self'] = {'href': mock_envelope_id}
+
+                submission['uuid'] = {'uuid': mock_envelope_uuid}
+                submission['submissionDate'] = 'mock-submission-date'
+                submission['updateDate'] = 'mock-update-date'
+                submission['submissionState'] = 'mock-submission-state'
+
+                yield submission
+
+
+
     @staticmethod
     def generate_mock_entities(count, specific_type):
         for i in range(0, count):

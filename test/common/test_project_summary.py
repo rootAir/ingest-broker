@@ -35,5 +35,3 @@ class EntityServiceTest(TestCase):
 
         assert project_summary.file_summary.count == 150
         assert len(project_summary.file_summary.breakdown.items()) == 1
-
-
