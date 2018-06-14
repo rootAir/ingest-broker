@@ -26,3 +26,7 @@ class EntityServiceTest(TestCase):
         assert added_together.breakdown['micromachine']['count'] == 40
 
         assert len(added_together.breakdown.items()) == 4
+
+        # assert original summary wasn't modified by the add
+        assert entity_summary.count == 1008
+        assert len(entity_summary.breakdown.items()) == 3

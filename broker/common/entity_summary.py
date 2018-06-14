@@ -9,11 +9,16 @@ class EntitySummary:
         :param other:
         :return: self
         """
-        self.count += other.count
+        # copy self into a new EntitySummary obj
+        combined_summary = EntitySummary()
+        combined_summary.count = self.count
+        combined_summary.breakdown = dict(self.breakdown)
+        
+        combined_summary.count += other.count
         for (key, val) in other.breakdown.items():
-            if key in self.breakdown:  # ..do an add
-                self.breakdown[key]['count'] += val['count']
+            if key in combined_summary.breakdown:  # ..do an add
+                combined_summary.breakdown[key]['count'] += val['count']
             else:
-                self.breakdown[key] = val
+                combined_summary.breakdown[key] = val
 
-        return self
+        return combined_summary
