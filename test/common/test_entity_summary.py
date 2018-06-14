@@ -2,7 +2,7 @@ from unittest import TestCase
 from broker.common.entity_summary import EntitySummary
 
 
-class EntityServiceTest(TestCase):
+class EntitySummaryTest(TestCase):
 
     def test_add_entity_summary(self):
         entity_summary = EntitySummary()
