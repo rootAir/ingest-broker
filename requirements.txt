@@ -9,5 +9,5 @@ itsdangerous==0.24
 jdcal==1.3
 MarkupSafe==1.0
 Werkzeug==0.13
--e "git+https://github.com/HumanCellAtlas/ingest-client.git@task/ingest-find-submission-by-uuid#egg=hca_ingest"
+-e "git+https://github.com/HumanCellAtlas/ingest-client.git@d838a8490dd4c9c8c21b021532dabb16e3199b0a#egg=hca_ingest"
 jsonpickle
