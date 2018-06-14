@@ -1,7 +1,9 @@
 from unittest import TestCase
 from unittest.mock import patch
+from time import sleep
 
 from broker.service.summary_service import SummaryService
+from broker.service.submission_summary_cache import SubmissionSummaryCache
 
 class SummaryServiceTest(TestCase):
 
@@ -111,7 +113,34 @@ class SummaryServiceTest(TestCase):
                 assert project_summary.protocol_summary.count == 100  # ...
                 assert project_summary.biomaterial_summary.count == 100  # ...
 
+    def test_generates_summary_when_cache_expire(self):
+        mock_ingest_api = patch('__main__.IngestApi')
+        mock_project_resource = dict()
 
+        cache_expiry = 3  # seconds
+        cache_size = 10
+
+        summary_cache = SubmissionSummaryCache(cache_size, cache_expiry)
+
+        with patch('broker.service.summary_service.SummaryService.get_submissions_in_project') as mock_get_project_submissions:
+            def get_submissions_in_project_mock(*args, **kwargs):
+                    yield from self.generate_mock_submissions_in_project(10)
+
+            mock_get_project_submissions.side_effect = get_submissions_in_project_mock
+
+            with patch('broker.service.summary_service.SummaryService.generate_summary_for_entity') as mock_generate_summary:
+                summary_service = SummaryService(mock_ingest_api, summary_cache)
+
+                summary_service.summary_for_project(mock_project_resource)
+                assert mock_generate_summary.call_count == 50  # 5 for each 10 submissions
+
+                summary_service.summary_for_project(mock_project_resource)
+                assert mock_generate_summary.call_count == 50  # assert still 50 because cache used
+
+                sleep(5)
+
+                summary_service.summary_for_project(mock_project_resource)
+                assert mock_generate_summary.call_count == 100  # assert 50 more calls after cache expiry
 
     @staticmethod
     def generate_mock_submissions_in_project(count):
