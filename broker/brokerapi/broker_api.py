@@ -81,7 +81,7 @@ def submission_summary(submission_uuid):
 
     return app.response_class(
         response=jsonpickle.encode(summary, unpicklable=False),
-        status=201,
+        status=200,
         mimetype='application/json'
     )
 
