@@ -1,5 +1,7 @@
 from ingest.api.ingestapi import IngestApi
 from broker.common.submission_summary import SubmissionSummary
+from broker.common.project_summary import ProjectSummary
+
 from typing import Generator
 
 
@@ -7,6 +9,11 @@ class SummaryService:
 
     def __init__(self, ingest_api=None):
         self.ingestapi = IngestApi() if not ingest_api else ingest_api
+
+    def summary_for_project(self, project_resource) -> ProjectSummary:
+        project_summary = ProjectSummary()
+
+        return project_summary
 
     def summary_for_submission(self, submission_resource) -> SubmissionSummary:
         """
