@@ -13,11 +13,11 @@ from broker.service.summary_service import SummaryService
 
 from werkzeug.utils import secure_filename
 import os
-import sys
 import tempfile
 import threading
 import logging
 import traceback
+import jsonpickle
 
 STATUS_LABEL = {
     'Valid': 'label-success',
@@ -80,7 +80,7 @@ def submission_summary(submission_uuid):
     summary = SummaryService().summary_for_submission(submission)
 
     return app.response_class(
-        response=json.dumps(summary),
+        response=jsonpickle.encode(summary, unpicklable=False),
         status=201,
         mimetype='application/json'
     )
