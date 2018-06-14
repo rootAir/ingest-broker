@@ -3,6 +3,7 @@ from broker.common.submission_summary import SubmissionSummary
 from broker.common.project_summary import ProjectSummary
 from broker.common.entity_summary import EntitySummary
 from .submission_summary_cache import SubmissionSummaryCache
+from .exception.cache_miss_exception import CacheMissException
 
 
 from typing import Generator
@@ -34,20 +35,27 @@ class SummaryService:
         :param submission_uri: URI string for the submission
         :return: A SubmissionSummary for this submission
         """
-        submission_summary = SubmissionSummary()
-        submission_uri = submission_resource['_links']['self']['href']
+        submission_uuid = self.uuid_from_submission(submission_resource)
 
-        submission_summary.biomaterial_summary = self.generate_biomaterial_summary(submission_uri)
-        submission_summary.project_summary = self.generate_project_summary(submission_uri)
-        submission_summary.protocol_summary = self.generate_protocol_summary(submission_uri)
-        submission_summary.file_summary = self.generate_file_summary(submission_uri)
-        submission_summary.process_summary = self.generate_process_summary(submission_uri)
+        try:
+            submission_summary = self.submission_summary_cache.get(submission_uuid)
+            return submission_summary
+        except CacheMissException:
+            submission_summary = SubmissionSummary()
+            submission_uri = submission_resource['_links']['self']['href']
 
-        submission_summary.create_date = submission_resource['submissionDate']
-        submission_summary.last_updated_date = submission_resource['updateDate']
-        submission_summary.submission_status = submission_resource['submissionState']
+            submission_summary.biomaterial_summary = self.generate_biomaterial_summary(submission_uri)
+            submission_summary.project_summary = self.generate_project_summary(submission_uri)
+            submission_summary.protocol_summary = self.generate_protocol_summary(submission_uri)
+            submission_summary.file_summary = self.generate_file_summary(submission_uri)
+            submission_summary.process_summary = self.generate_process_summary(submission_uri)
 
-        return submission_summary
+            submission_summary.create_date = submission_resource['submissionDate']
+            submission_summary.last_updated_date = submission_resource['updateDate']
+            submission_summary.submission_status = submission_resource['submissionState']
+
+            self.submission_summary_cache[submission_uuid] = submission_summary
+            return submission_summary
 
     def generate_biomaterial_summary(self, submission_uri) -> EntitySummary:
         return self.generate_summary_for_entity(submission_uri, 'biomaterials')
@@ -108,3 +116,7 @@ class SummaryService:
         else:
             entity_described_by = entity['content']['describedBy']
             return entity_described_by.split('/')[-1]
+
+    @staticmethod
+    def uuid_from_submission(submission_resource) -> str:
+        return submission_resource['uuid']['uuid']
