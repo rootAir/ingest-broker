@@ -1,6 +1,8 @@
 from ingest.api.ingestapi import IngestApi
 from broker.common.submission_summary import SubmissionSummary
 from broker.common.project_summary import ProjectSummary
+from broker.common.entity_summary import EntitySummary
+
 
 from typing import Generator
 
@@ -39,25 +41,25 @@ class SummaryService:
 
         return submission_summary
 
-    def generate_biomaterial_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
+    def generate_biomaterial_summary(self, submission_uri) -> EntitySummary:
         return self.generate_summary_for_entity(submission_uri, 'biomaterials')
 
-    def generate_project_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
+    def generate_project_summary(self, submission_uri) -> EntitySummary:
         return self.generate_summary_for_entity(submission_uri, 'projects')
 
-    def generate_protocol_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
+    def generate_protocol_summary(self, submission_uri) -> EntitySummary:
         return self.generate_summary_for_entity(submission_uri, 'protocols')
 
-    def generate_file_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
+    def generate_file_summary(self, submission_uri) -> EntitySummary:
         return self.generate_summary_for_entity(submission_uri, 'files')
 
-    def generate_process_summary(self, submission_uri) -> SubmissionSummary.EntitySummary:
+    def generate_process_summary(self, submission_uri) -> EntitySummary:
         return self.generate_summary_for_entity(submission_uri, 'processes')
 
     def get_entities_in_submission(self, submission_uri, entity_type) -> Generator[dict, None, None]:
         yield from self.ingestapi.getEntities(submission_uri, entity_type, 1000)
 
-    def generate_summary_for_entity(self, submission_uri, entity_type) -> SubmissionSummary.EntitySummary:
+    def generate_summary_for_entity(self, submission_uri, entity_type) -> EntitySummary:
         """
         given a core entity type of the ingest API (i.e biomaterial, protocol, process, ...), and a submission,
         returns a detailed summary i.e each of the entity type in the envelope broken down by specific type
@@ -66,7 +68,7 @@ class SummaryService:
         :param entity_type: the type of the entity (e.g biomaterial, protocol, process, ...)
         :return: a summary with a count of each entity type, further broken down by count of each specific entity type
         """
-        entity_summary = SubmissionSummary.EntitySummary()
+        entity_summary = EntitySummary()
 
         entity_specific_types = dict()
         entities = self.get_entities_in_submission(submission_uri, entity_type)
