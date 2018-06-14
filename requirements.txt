@@ -11,3 +11,4 @@ MarkupSafe==1.0
 Werkzeug==0.13
 -e "git+https://github.com/HumanCellAtlas/ingest-client.git@bbefc2226742979c4164b7cb5975679f32a2f96d#egg=hca_ingest"
 jsonpickle
+expiringdict==1.1.4
