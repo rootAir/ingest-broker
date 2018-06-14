@@ -9,18 +9,18 @@ RUN apk update && \
     apk add git
 
 RUN mkdir /app
+
 COPY broker /app/broker
-COPY broker/templates /app/templates
-COPY broker/static /app/static
-COPY broker/broker_app.py requirements.txt /app/
-WORKDIR /app
+COPY broker_app.py /app/broker_app.py
+COPY requirements.txt /app/requirements.txt
+
+WORKDIR /app/
 
 RUN pip install -r /app/requirements.txt
-
 RUN apk del gcc
 
 ENV INGEST_API=http://localhost:8080
 
 EXPOSE 5000
 ENTRYPOINT ["python"]
-CMD ["broker/broker_app.py"]
+CMD ["broker_app.py"]

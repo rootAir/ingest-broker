@@ -9,14 +9,15 @@ from flask_cors import CORS, cross_origin
 from flask import json
 from ingest.api.ingestapi import IngestApi
 from ingest.importer.importer import XlsImporter
+from broker.service.summary_service import SummaryService
 
 from werkzeug.utils import secure_filename
 import os
-import sys
 import tempfile
 import threading
 import logging
 import traceback
+import jsonpickle
 
 STATUS_LABEL = {
     'Valid': 'label-success',
@@ -71,6 +72,18 @@ def upload_spreadsheet():
         logger.error(traceback.format_exc())
         return create_upload_failure_response(500, "We experienced a problem while uploading your spreadsheet",
                                               str(err))
+
+
+@app.route('/submissions/<submission_uuid>/summary', methods=['GET'])
+def submission_summary(submission_uuid):
+    submission = IngestApi().getSubmissionByUuid(submission_uuid)
+    summary = SummaryService().summary_for_submission(submission)
+
+    return app.response_class(
+        response=jsonpickle.encode(summary, unpicklable=False),
+        status=200,
+        mimetype='application/json'
+    )
 
 
 def _submit_spreadsheet_data(importer, path, submission_url, project_uuid):
@@ -261,9 +274,3 @@ def submit_envelope():
     if sub_url:
         ingest_api.finishSubmission(sub_url)
     return redirect(url_for('index'))
-
-
-if __name__ == '__main__':
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-
-    app.run(host='0.0.0.0', port=5000)
