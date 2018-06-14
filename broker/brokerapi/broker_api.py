@@ -86,6 +86,18 @@ def submission_summary(submission_uuid):
     )
 
 
+@app.route('/projects/<project_uuid>/summary', methods=['GET'])
+def project_summary(project_uuid):
+    project = IngestApi().getProjectByUuid(project_uuid)
+    summary = SummaryService().summary_for_project(project)
+
+    return app.response_class(
+        response=jsonpickle.encode(summary, unpicklable=False),
+        status=200,
+        mimetype='application/json'
+    )
+
+
 def _submit_spreadsheet_data(importer, path, submission_url, project_uuid):
 
     logger.info("Attempting submission")
