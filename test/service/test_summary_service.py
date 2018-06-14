@@ -73,7 +73,7 @@ class SummaryServiceTest(TestCase):
             assert submission_summary.last_updated_date == mock_envelope_update_date
 
     def test_generate_project_summary(self):
-        summary_service = SummaryService()
+        summary_service = SummaryService(patch('__main__.IngestApi'))
         mock_project_id = 'mock-project-id'
         mock_project_resource = dict()
         mock_project_resource['_links'] = dict()
