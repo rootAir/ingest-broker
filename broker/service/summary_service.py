@@ -54,7 +54,7 @@ class SummaryService:
             submission_summary.last_updated_date = submission_resource['updateDate']
             submission_summary.submission_status = submission_resource['submissionState']
 
-            self.submission_summary_cache[submission_uuid] = submission_summary
+            self.submission_summary_cache.insert(submission_uuid, submission_summary)
             return submission_summary
 
     def generate_biomaterial_summary(self, submission_uri) -> EntitySummary:
