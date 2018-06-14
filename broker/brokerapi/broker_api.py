@@ -85,7 +85,8 @@ def submission_summary(submission_uuid):
         mimetype='application/json'
     )
 
-@app.route('/submissions/<project_uuid>/summary', methods=['GET'])
+
+@app.route('/projects/<project_uuid>/summary', methods=['GET'])
 def project_summary(project_uuid):
     project = IngestApi().getProjectByUuid(project_uuid)
     summary = SummaryService().summary_for_project(project)
