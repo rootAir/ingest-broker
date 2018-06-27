@@ -1,9 +1,8 @@
 from unittest import TestCase
 from unittest.mock import patch
 
-from broker import broker_app
-from broker.broker_app import app
-
+from broker.brokerapi import broker_api
+from broker.brokerapi.broker_api import app
 
 class BrokerAppTest(TestCase):
 
@@ -18,9 +17,9 @@ class BrokerAppTest(TestCase):
         self.assertEqual(401, response.status_code)
 
     def test_failed_save(self):
-        with patch.object(broker_app, '_save_file') as save_file:
+        with patch.object(broker_api, '_save_file') as save_file:
             # given:
-            assert save_file is broker_app._save_file
+            assert save_file is broker_api._save_file
             save_file.side_effect = Exception("I/O error")
 
             # when:
