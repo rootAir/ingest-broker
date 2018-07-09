@@ -37,7 +37,7 @@ class TSVSummaryUtil:
 
     @staticmethod
     def entity_count_tuples_from_breakdowns(breakdowns: list):
-        return reduce(lambda xs, ys: xs.extend(ys),
+        return reduce(lambda xs, ys: xs + ys,
                       map(lambda breakdown: TSVSummaryUtil.breakdown_to_entity_count_tuple(breakdown), breakdowns))
 
     @staticmethod
@@ -50,7 +50,7 @@ class TSVSummaryUtil:
             headers = list([entity_count_tuple[0] for entity_count_tuple in entity_count_tuples])
             counts = list([entity_count_tuple[1] for entity_count_tuple in entity_count_tuples])
 
-            writer = csv.writer(tsvfile, fieldnames=headers)
+            writer = csv.writer(tsvfile,  delimiter='\t')
             writer.writerow(headers)
             writer.writerow(counts)
             return writer
