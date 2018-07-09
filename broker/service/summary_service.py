@@ -102,6 +102,7 @@ class SummaryService:
         entity_summary.breakdown = entity_specific_types
         return entity_summary
 
+
     @staticmethod
     def parse_specific_entity_type(entity) -> str:
         """
