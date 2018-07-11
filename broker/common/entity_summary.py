@@ -1,7 +1,9 @@
+from collections import OrderedDict
+
 class EntitySummary:
     def __init__(self):
         self.count = 0
-        self.breakdown = dict()
+        self.breakdown = OrderedDict()
 
     def __add__(self, other: 'EntitySummary') -> 'EntitySummary':
         """
@@ -12,7 +14,7 @@ class EntitySummary:
         # copy self into a new EntitySummary obj
         combined_summary = EntitySummary()
         combined_summary.count = self.count
-        combined_summary.breakdown = dict(self.breakdown)
+        combined_summary.breakdown = OrderedDict(self.breakdown)
         
         combined_summary.count += other.count
         for (key, val) in other.breakdown.items():
