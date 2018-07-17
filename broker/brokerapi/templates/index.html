@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename = 'css/index.css') }}">
+    <script src="{{ url_for('static', filename = 'js/index.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>All Submissions</h1>
+        <table id="submissions" class="table table-striped">
+            <thead>
+            <tr>
+                <th>Submission UUID</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Updated</th>
+                <th>Complete</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for sub in submissions %}
+                <tr data-url="{{ sub['_links']['self']['href'] }}" data-date="{{ sub['updateDate'] }}">
+                    {% include 'submission-row.html' %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
