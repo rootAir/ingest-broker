@@ -1,0 +1,11 @@
+version: '3'
+services:
+  broker:
+    build: .
+    image: humancellatlas/ingest-broker
+    ports:
+      - "5000:5000"
+    environment:
+      - INGEST_API=https://api.ingest.data.humancellatlas.org
+networks:
+  default:
