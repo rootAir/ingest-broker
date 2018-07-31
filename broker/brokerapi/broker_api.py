@@ -38,8 +38,9 @@ app = Flask(__name__, static_folder='static')
 app.secret_key = 'cells'
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
-logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 @app.route('/api_upload', methods=['POST'])
 @cross_origin()
