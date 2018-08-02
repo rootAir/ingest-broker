@@ -47,10 +47,10 @@ class TSVSummaryUtil:
     @staticmethod
     def entity_count_tuples_to_tsv(entity_count_tuples: list):
         with open('report.tsv', 'w') as tsvfile:
-            headers = list([entity_count_tuple[0] for entity_count_tuple in entity_count_tuples])
-            counts = list([entity_count_tuple[1] for entity_count_tuple in entity_count_tuples])
-
+            headers = ["entity", "count"]
             writer = csv.writer(tsvfile,  delimiter='\t')
             writer.writerow(headers)
-            writer.writerow(counts)
+            for entity_count_tuple in entity_count_tuples:
+                writer.writerow(list(entity_count_tuple))
             return writer
+
