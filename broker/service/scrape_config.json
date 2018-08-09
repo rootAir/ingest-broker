@@ -1,0 +1,16 @@
+{
+  "configs" : [
+    {
+      "placeholder" : "project_title",
+      "entity_type" : "project",
+      "paths" : "project_core.project_title",
+      "post_process" : ""
+    },
+    {
+      "placeholder" : "no. total estimated cells",
+      "entity_type" : "biomaterial",
+      "paths" : "cell_suspension.total_estimated_cells",
+      "post_process" : "sum"
+    }
+  ]
+}

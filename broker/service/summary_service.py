@@ -8,27 +8,27 @@ from .exception.cache_miss_exception import CacheMissException
 
 from typing import Generator
 from typing import Iterable
-from typing import Callable
 from functools import reduce
+from jsonpath_rw import jsonpath, parse
 
 import json
+import os
 
+
+# TODO: consider storing generators here and generating the complete summary in one pass
+class SubmissionEntities:
+    def __init__(self, biomaterials=None, projects=None, processes=None, protocols=None, files=None):
+        self.biomaterials = biomaterials if biomaterials else []
+        self.projects = projects if projects else []
+        self.processes = processes if processes else []
+        self.protocols = protocols if protocols else []
+        self.files = files if files else []
 
 class SummaryService:
 
     def __init__(self, ingest_api=None, submission_summary_cache=None):
         self.ingestapi = IngestApi() if not ingest_api else ingest_api
         self.submission_summary_cache = SubmissionSummaryCache() if not submission_summary_cache else submission_summary_cache
-
-    # TODO: consider storing generators here and generating the complete summary in one pass
-    class SubmissionEntities:
-        def __init__(self, biomaterials=None, projects=None, processes=None, protocols=None, files=None):
-            self.biomaterials = biomaterials if biomaterials else []
-            self.projects = projects if projects else []
-            self.processes = processes if processes else []
-            self.protocols = protocols if protocols else []
-            self.files = files if files else []
-
 
     def summary_for_project(self, project_resource) -> ProjectSummary:
         project_summary = ProjectSummary()
@@ -65,7 +65,13 @@ class SummaryService:
 
             submissions_entities = self.get_all_entities_in_submission(submission_uri)
             submission_summary = self.add_entity_count_breakdown(submission_summary, submissions_entities)
-            self.add_specific_submission_information(submission_summary, submissions_entities, None) # TODO: pass a scrape-config
+
+            scrape_config_path = os.path.join(os.path.dirname(__file__), 'scrape_config.json')  # TODO: pass config in
+            submission_scraper = SubmissionScraper.from_file(scrape_config_path)
+
+            submission_summary = self.add_specific_submission_information(submission_summary,
+                                                                          submissions_entities,
+                                                                          submission_scraper) # TODO: pass a scrape-config
 
             submission_summary.create_date = submission_resource['submissionDate']
             submission_summary.last_updated_date = submission_resource['updateDate']
@@ -83,17 +89,16 @@ class SummaryService:
         return submission_summary
 
 
-    def add_specific_submission_information(self, submission_summary, submission_entities, information_map):
+    def add_specific_submission_information(self, submission_summary, submission_entities, submission_scraper):
         """
-        With instructions from the information_map, this will attempt to find specific submission info and add
-        it to the summary
+        Using the submission scraper, primed with scrape directives, collects and processes designated information
+        from the submission
         :param submission_summary:
         :param submission_entities:
-        :param information_map:
+        :param submission_scraper:
         :return:
         """
-
-        pass # TODO
+        return submission_summary
 
 
 
@@ -101,11 +106,11 @@ class SummaryService:
         yield from self.ingestapi.getEntities(submission_uri, entity_type, 1000)
 
     def get_all_entities_in_submission(self, submission_uri):
-        return self.SubmissionEntities(list(self.get_entities_in_submission(submission_uri, 'biomaterials')),
-                                       list(self.get_entities_in_submission(submission_uri, 'projects')),
-                                       list(self.get_entities_in_submission(submission_uri, 'processes')),
-                                       list(self.get_entities_in_submission(submission_uri, 'protocols')),
-                                       list(self.get_entities_in_submission(submission_uri, 'files')))
+        return SubmissionEntities(list(self.get_entities_in_submission(submission_uri, 'biomaterials')),
+                                  list(self.get_entities_in_submission(submission_uri, 'projects')),
+                                  list(self.get_entities_in_submission(submission_uri, 'processes')),
+                                  list(self.get_entities_in_submission(submission_uri, 'protocols')),
+                                  list(self.get_entities_in_submission(submission_uri, 'files')))
 
     def get_submissions_in_project(self, project_resource) -> Generator[dict, None, None]:
         yield from self.ingestapi.getRelatedEntities('submissionEnvelopes', project_resource, 'submissionEnvelopes')
@@ -152,33 +157,20 @@ class SummaryService:
     def uuid_from_submission(submission_resource) -> str:
         return submission_resource['uuid']['uuid']
 
+
 class ScrapeConfig:
     """
     Represents a configuration file used to configure a SubmissionScraper
     """
 
-    def __init__(self, placeholder_name, entity_type, path, post_process):
-        self.placeholder_name = placeholder_name
+    def __init__(self, placeholder, entity_type, path, post_process):
+        self.placeholder = placeholder
         self.entity_type = entity_type
         self.path = path
         self.post_process = post_process
 
+
 class SubmissionScraper:
-
-
-    @staticmethod
-    def scrape_configs_from_dict(config: dict) -> Generator[ScrapeConfig, None, None]:
-        yield from map(lambda conf: ScrapeConfig(conf['placeholder'],
-                                                 conf['entity_type'],
-                                                 conf['path'],
-                                                 conf['post_process']),
-                       config.items())
-
-    @staticmethod
-    def scrape_configs_from_file(file) -> Generator[ScrapeConfig, None, None]:
-        with open(file, 'rb') as config_file:
-            config = json.load(config_file)
-            yield from SubmissionScraper.scrape_configs_from_dict(config)
 
     class Directive:
         """
@@ -193,11 +185,62 @@ class SubmissionScraper:
             self.field_path = field_path
             self.reducer = reducer
 
+    class GroupedDirectives:
+        def __init__(self):
+            self.biomaterial_directives = []
+            self.processes_directives = []
+            self.protocol_directives = []
+            self.file_directives = []
+            self.project_directives = []
+
     def __init__(self, directives=None):
         self.directives = directives if directives else []
+        self.grouped_directives = self.group_directives(self.directives)
+
+
+    def scrape(self, submission_entities: SubmissionEntities):
+        """
+        given a SubmissionEntities obj, scrapes as directed
+        :param submission_entities:
+        :return:
+        """
+        scrape_result = dict()
 
     @staticmethod
-    def from_scrape_configs(scrape_configs: Generator[ScrapeConfig, None, None]) -> Iterable[Directive]:
+    def group_directives(directives: Iterable[Directive]):
+        grouped_directives = SubmissionScraper.GroupedDirectives()
+
+        grouped_directives.biomaterial_directives = filter(lambda directive: directive.entity_type == 'biomaterial',directives)
+        grouped_directives.project_directives = filter(lambda directive: directive.entity_type == 'project', directives)
+        grouped_directives.protocol_directives = filter(lambda directive: directive.entity_type == 'protocol', directives)
+        grouped_directives.process_directives = filter(lambda directive: directive.entity_type == 'process', directives)
+        grouped_directives.file_directives = filter(lambda directive: directive.entity_type == 'file', directives)
+
+        return grouped_directives
+
+    @staticmethod
+    def from_file(file_path):
+        scrape_configs = SubmissionScraper.scrape_configs_from_file(file_path)
+        directives = SubmissionScraper.directives_from_scrape_configs(scrape_configs)
+        return SubmissionScraper(list(directives))
+
+    @staticmethod
+    def scrape_configs_from_dicts(configs: Iterable[dict]) -> Generator[ScrapeConfig, None, None]:
+        yield from map(lambda conf: ScrapeConfig(conf['placeholder'],
+                                                 conf['entity_type'],
+                                                 conf['paths'],
+                                                 conf['post_process']),
+                       configs)
+
+    @staticmethod
+    def scrape_configs_from_file(file) -> Generator[ScrapeConfig, None, None]:
+        with open(file, 'rb') as config_file:
+            config = json.load(config_file)
+            yield from SubmissionScraper.scrape_configs_from_dicts(config['configs'])
+
+
+    @staticmethod
+    def directives_from_scrape_configs(scrape_configs: Generator[ScrapeConfig, None, None]) -> Iterable[Directive]:
         """
         returns directives given scrap configs
         :param scrape_configs:
@@ -211,9 +254,8 @@ class SubmissionScraper:
     @staticmethod
     def reducer_for(post_process_func: str):
         if post_process_func == "sum":
-            return lambda collection: reduce((lambda x,y: x + y), collection)
+            return lambda collection: reduce((lambda x, y: x + y), collection)
         elif post_process_func == "count":
-            return lambda collection: reduce((lambda x,y: x + 1), collection, 0)
+            return lambda collection: reduce((lambda x, y: x + 1), collection, 0)
         else:
-            return lambda collection: collection # just return the collection
-
+            return lambda collection: collection  # just return the collection
