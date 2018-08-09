@@ -15,6 +15,15 @@ class SummaryService:
         self.ingestapi = IngestApi() if not ingest_api else ingest_api
         self.submission_summary_cache = SubmissionSummaryCache() if not submission_summary_cache else submission_summary_cache
 
+    # TODO: consider storing generators here and generating the complete summary in one pass
+    class SubmissionEntities:
+        def __init__(self, biomaterials=None, projects=None, processes=None, protocols=None, files=None):
+            self.biomaterials = biomaterials if biomaterials else []
+            self.projects = projects if projects else []
+            self.processes = processes if processes else []
+            self.protocols = protocols if protocols else []
+            self.files = files if files else []
+
     def summary_for_project(self, project_resource) -> ProjectSummary:
         project_summary = ProjectSummary()
 
@@ -28,9 +37,13 @@ class SummaryService:
 
     def summary_for_submission(self, submission_resource) -> SubmissionSummary:
         """
-        Given a submission URI, returns a detailed summary of the submission i.e the amount of each entity type in the
-        submission(i.e biomaterial, file, protocol, ...), further broken down by entity type (e.g donor, tissue, cell
-        suspension)
+        Given a submission URI, returns a detailed summary of the submission.
+
+        The summary will specify the amount of each entity type in the submission(i.e biomaterial, file, protocol, ...),
+        further broken down by entity type (e.g donor, tissue, cell suspension), ...
+
+        In addition, an attempt will be made to parse specific information from the submission such as the project
+        title, # of cells, organ, donor, ...
 
         :param submission_uri: URI string for the submission
         :return: A SubmissionSummary for this submission
@@ -44,11 +57,8 @@ class SummaryService:
             submission_summary = SubmissionSummary()
             submission_uri = submission_resource['_links']['self']['href']
 
-            submission_summary.biomaterial_summary = self.generate_biomaterial_summary(submission_uri)
-            submission_summary.project_summary = self.generate_project_summary(submission_uri)
-            submission_summary.protocol_summary = self.generate_protocol_summary(submission_uri)
-            submission_summary.file_summary = self.generate_file_summary(submission_uri)
-            submission_summary.process_summary = self.generate_process_summary(submission_uri)
+            submissions_entities = self.get_all_entities_in_submission(submission_uri)
+            submission_summary = self.add_entity_count_breakdown(submission_summary, submissions_entities)
 
             submission_summary.create_date = submission_resource['submissionDate']
             submission_summary.last_updated_date = submission_resource['updateDate']
@@ -57,40 +67,39 @@ class SummaryService:
             self.submission_summary_cache.insert(submission_uuid, submission_summary)
             return submission_summary
 
-    def generate_biomaterial_summary(self, submission_uri) -> EntitySummary:
-        return self.generate_summary_for_entity(submission_uri, 'biomaterials')
-
-    def generate_project_summary(self, submission_uri) -> EntitySummary:
-        return self.generate_summary_for_entity(submission_uri, 'projects')
-
-    def generate_protocol_summary(self, submission_uri) -> EntitySummary:
-        return self.generate_summary_for_entity(submission_uri, 'protocols')
-
-    def generate_file_summary(self, submission_uri) -> EntitySummary:
-        return self.generate_summary_for_entity(submission_uri, 'files')
-
-    def generate_process_summary(self, submission_uri) -> EntitySummary:
-        return self.generate_summary_for_entity(submission_uri, 'processes')
+    def add_entity_count_breakdown(self, submission_summary, submission_entities):
+        submission_summary.biomaterial_summary = self.generate_summary_for_entity(submission_entities.biomaterials)
+        submission_summary.project_summary = self.generate_summary_for_entity(submission_entities.projects)
+        submission_summary.protocol_summary = self.generate_summary_for_entity(submission_entities.protocols)
+        submission_summary.file_summary = self.generate_summary_for_entity(submission_entities.files)
+        submission_summary.process_summary = self.generate_summary_for_entity(submission_entities.processes)
+        return submission_summary
 
     def get_entities_in_submission(self, submission_uri, entity_type) -> Generator[dict, None, None]:
         yield from self.ingestapi.getEntities(submission_uri, entity_type, 1000)
 
+    def get_all_entities_in_submission(self, submission_uri):
+        return self.SubmissionEntities(list(self.get_entities_in_submission(submission_uri, 'biomaterials')),
+                                       list(self.get_entities_in_submission(submission_uri, 'projects')),
+                                       list(self.get_entities_in_submission(submission_uri, 'processes')),
+                                       list(self.get_entities_in_submission(submission_uri, 'protocols')),
+                                       list(self.get_entities_in_submission(submission_uri, 'files')))
+
     def get_submissions_in_project(self, project_resource) -> Generator[dict, None, None]:
         yield from self.ingestapi.getRelatedEntities('submissionEnvelopes', project_resource, 'submissionEnvelopes')
 
-    def generate_summary_for_entity(self, submission_uri, entity_type) -> EntitySummary:
+    def generate_summary_for_entity(self, entities) -> EntitySummary:
         """
-        given a core entity type of the ingest API (i.e biomaterial, protocol, process, ...), and a submission,
-        returns a detailed summary i.e each of the entity type in the envelope broken down by specific type
+        given a collection of entities (i.e biomaterials, protocols, processes, ...) a submission,
+        returns a summary of the entities i.e specific entity types with releated counts
 
-        :param submission_uri: URI string for the submission
+        :param entities: entities from which to generate an entity summary
         :param entity_type: the type of the entity (e.g biomaterial, protocol, process, ...)
         :return: a summary with a count of each entity type, further broken down by count of each specific entity type
         """
         entity_summary = EntitySummary()
 
         entity_specific_types = dict()
-        entities = self.get_entities_in_submission(submission_uri, entity_type)
         for entity in entities:
             specific_type = self.parse_specific_entity_type(entity)
             if specific_type not in entity_specific_types:
@@ -101,7 +110,6 @@ class SummaryService:
 
         entity_summary.breakdown = entity_specific_types
         return entity_summary
-
 
     @staticmethod
     def parse_specific_entity_type(entity) -> str:
@@ -121,3 +129,4 @@ class SummaryService:
     @staticmethod
     def uuid_from_submission(submission_resource) -> str:
         return submission_resource['uuid']['uuid']
+
