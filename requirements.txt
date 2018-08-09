@@ -12,3 +12,4 @@ Werkzeug==0.13
 -e "git+https://github.com/HumanCellAtlas/ingest-client.git@1c51fa708964131490c8664ae8c3e7ed97576aff#egg=hca_ingest"
 jsonpickle
 expiringdict==1.1.4
+jsonpath-rw
