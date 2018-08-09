@@ -17,7 +17,7 @@ class SummaryServiceTest(TestCase):
             mock_biomaterial_entities = self.generate_mock_entities(10, mock_specific_type)
             mock_get_entities_in_submission.return_value = mock_biomaterial_entities
 
-            entity_summary = summary_service.generate_summary_for_entity(mock_envelope_uri, mock_specific_type)
+            entity_summary = summary_service.generate_summary_for_entity(mock_biomaterial_entities)
             assert mock_specific_type in entity_summary.breakdown
             assert entity_summary.count == 10
 
@@ -128,19 +128,19 @@ class SummaryServiceTest(TestCase):
 
             mock_get_project_submissions.side_effect = get_submissions_in_project_mock
 
-            with patch('broker.service.summary_service.SummaryService.generate_summary_for_entity') as mock_generate_summary:
+            with patch('broker.service.summary_service.SummaryService.get_entities_in_submission') as mock_get_entities:
                 summary_service = SummaryService(mock_ingest_api, summary_cache)
 
                 summary_service.summary_for_project(mock_project_resource)
-                assert mock_generate_summary.call_count == 50  # 5 for each 10 submissions
+                assert mock_get_entities.call_count == 50  # 5 for each 10 submissions
 
                 summary_service.summary_for_project(mock_project_resource)
-                assert mock_generate_summary.call_count == 50  # assert still 50 because cache used
+                assert mock_get_entities.call_count == 50  # assert still 50 because cache used
 
                 sleep(5)
 
                 summary_service.summary_for_project(mock_project_resource)
-                assert mock_generate_summary.call_count == 100  # assert 50 more calls after cache expiry
+                assert mock_get_entities.call_count == 100  # assert 50 more calls after cache expiry
 
     @staticmethod
     def generate_mock_submissions_in_project(count):
