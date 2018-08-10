@@ -8,6 +8,13 @@
       "post_process" : ""
     },
     {
+      "placeholder" : "cell_type",
+      "entity_type" : "biomaterial",
+      "identifier" : "cell_suspension",
+      "paths" : ["selected_cell_type[*].text"],
+      "post_process" : "unique"
+    },
+    {
       "placeholder" : "num_total_estimated_cells",
       "entity_type" : "biomaterial",
       "identifier" : null,
@@ -28,6 +35,13 @@
       "paths" : ["organ.text", "organ_part.text"],
       "post_process" : "unique"
     },
+    {
+      "placeholder" : "organoid_organ_model",
+      "entity_type" : "biomaterial",
+      "identifier" : "organoid",
+      "paths" : ["model_for_organ.text", "model_organ_part.text"],
+      "post_process" : "unique"
+    },    
     {
       "placeholder" : "genus_species",
       "entity_type" : "biomaterial",
