@@ -98,9 +98,8 @@ class SummaryService:
         :param submission_scraper:
         :return:
         """
+        submission_summary.scrape_result = submission_scraper.scrape(submission_entities)
         return submission_summary
-
-
 
     def get_entities_in_submission(self, submission_uri, entity_type) -> Generator[dict, None, None]:
         yield from self.ingestapi.getEntities(submission_uri, entity_type, 1000)
@@ -179,11 +178,12 @@ class SubmissionScraper:
         collection of matching field-values as param and return a single value
         """
 
-        def __init__(self, placeholder=None, entity_type=None, field_path=None, reducer=None):
+        def __init__(self, placeholder=None, entity_type=None, paths=None, reducer=None):
             self.placeholder = placeholder
             self.entity_type = entity_type
-            self.field_path = field_path
+            self.paths = paths
             self.reducer = reducer
+            self.parsers = [parse(path) for path in self.paths]
 
     class GroupedDirectives:
         def __init__(self):
@@ -198,13 +198,48 @@ class SubmissionScraper:
         self.grouped_directives = self.group_directives(self.directives)
 
 
-    def scrape(self, submission_entities: SubmissionEntities):
+    def scrape(self, submission_entities: SubmissionEntities) -> dict:
         """
         given a SubmissionEntities obj, scrapes as directed
         :param submission_entities:
         :return:
         """
+
+        #  gets scrape dicts for each entity type, combines all into a single dict
+
+        scrapes = [self.apply_directives(submission_entities.biomaterials, self.grouped_directives.biomaterial_directives),
+                   self.apply_directives(submission_entities.processes, self.grouped_directives.processes_directives),
+                   self.apply_directives(submission_entities.protocols, self.grouped_directives.protocol_directives),
+                   self.apply_directives(submission_entities.files, self.grouped_directives.file_directives),
+                   self.apply_directives(submission_entities.projects, self.grouped_directives.project_directives)]
+
+        x = 3
+
+        return reduce(lambda scrape_a, scrape_b: {**scrape_a, **scrape_b}, scrapes)
+
+    @staticmethod
+    def apply_directives(entities, directives):
+        """
+        Applying a directive:
+        - find matching keys by following json path
+        - apply reduction algorithm to final collection
+        :param entities:
+        :param directives:
+        :return:
+        """
         scrape_result = dict()
+
+        for directive in directives:
+            found_values = []
+
+            for entity in entities:
+                for parser in directive.parsers:
+                    found_values += [match.value for match in parser.find(entity['content'])]
+
+            if len(found_values) > 0:
+                scrape_result[directive.placeholder] = directive.reducer(found_values)
+
+        return scrape_result
 
     @staticmethod
     def group_directives(directives: Iterable[Directive]):
@@ -213,7 +248,7 @@ class SubmissionScraper:
         grouped_directives.biomaterial_directives = filter(lambda directive: directive.entity_type == 'biomaterial',directives)
         grouped_directives.project_directives = filter(lambda directive: directive.entity_type == 'project', directives)
         grouped_directives.protocol_directives = filter(lambda directive: directive.entity_type == 'protocol', directives)
-        grouped_directives.process_directives = filter(lambda directive: directive.entity_type == 'process', directives)
+        grouped_directives.processes_directives = filter(lambda directive: directive.entity_type == 'process', directives)
         grouped_directives.file_directives = filter(lambda directive: directive.entity_type == 'file', directives)
 
         return grouped_directives
