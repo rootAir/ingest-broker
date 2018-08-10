@@ -18,7 +18,11 @@ class TSVSummaryUtil:
         breakdowns = TSVSummaryUtil.breakdowns_from_submission_summary(submission_summary)
         entity_count_tuples = TSVSummaryUtil.entity_count_tuples_from_breakdowns(breakdowns)
 
-        return TSVSummaryUtil.entity_count_tuples_to_tsv(entity_count_tuples)
+        TSVSummaryUtil.entity_count_tuples_to_tsv(entity_count_tuples)
+        TSVSummaryUtil.scrape_result_to_tsv(submission_summary.scrape_result)
+
+        return True
+
 
     @staticmethod
     def breakdowns_from_project_summary(project_summary: ProjectSummary):
@@ -54,3 +58,10 @@ class TSVSummaryUtil:
                 writer.writerow(list(entity_count_tuple))
             return writer
 
+    @staticmethod
+    def scrape_result_to_tsv(scrape_result: dict):
+        with open('scrape.tsv', 'w') as tsvfile:
+            writer = csv.writer(tsvfile,  delimiter='\t')
+            for scraped_tuple in scrape_result.items():
+                writer.writerow(list(scraped_tuple))
+            return writer
