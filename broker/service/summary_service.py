@@ -205,7 +205,7 @@ class SubmissionScraper:
             identifier = self.identifier
 
             def identify(entities):  # TODO: move parse_specific_entity_type
-                return [filter(lambda entity: SummaryService.parse_specific_entity_type(entity) == self.identifier, entities)]
+                return list(filter(lambda entity: SummaryService.parse_specific_entity_type(entity) == self.identifier, entities))
 
             def pathMatch(entities):
                 found_values = []
