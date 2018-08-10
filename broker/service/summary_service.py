@@ -204,23 +204,24 @@ class SubmissionScraper:
             parsers = self.parsers
             identifier = self.identifier
 
-            def identify(entity):
-                return entity if SummaryService.parse_specific_entity_type(entity) == identifier else {}
+            def identify(entities):  # TODO: move parse_specific_entity_type
+                return [filter(lambda entity: SummaryService.parse_specific_entity_type(entity) == self.identifier, entities)]
 
-            def pathMatch(entity):
+            def pathMatch(entities):
                 found_values = []
-                for parser in parsers:
-                    found_values += [match.value for match in parser.find(entity['content'])]
+                for entity in entities:
+                    for parser in parsers:
+                        found_values += [match.value for match in parser.find(entity['content'])]
                 return found_values
 
             def combined_function():
                 if identifier:
                     if parsers and (len(parsers) > 0):
-                        return lambda entity: pathMatch(identify(entity))
+                        return lambda entities: pathMatch(identify(entities))
                     else:
-                        return lambda entity: id(entity)
+                        return lambda entities: identify(entities)
                 elif parsers and (len(parsers) > 0):
-                    return lambda entity: pathMatch(entity)
+                    return lambda entities: pathMatch(entities)
                 else:
                     raise Exception("Can't generate a parse directive without either an identifier or path matcher")
 
@@ -275,10 +276,9 @@ class SubmissionScraper:
         for directive in directives:
             found_values = []
             for entity in entities:
-                found_values += directive.apply(entity)
+                found_values += directive.apply([entity])
 
-            if len(found_values) > 0:
-                scrape_result[directive.placeholder] = directive.reducer(found_values)
+            scrape_result[directive.placeholder] = directive.reducer(found_values)
 
         return scrape_result
 
@@ -332,7 +332,7 @@ class SubmissionScraper:
     @staticmethod
     def reducer_for(post_process_func: str):
         if post_process_func == "sum":
-            return lambda collection: reduce((lambda x, y: x + y), collection)
+            return lambda collection: reduce((lambda x, y: x + y), collection, 0)
         elif post_process_func == "count":
             return lambda collection: reduce((lambda x, y: x + 1), collection, 0)
         else:
