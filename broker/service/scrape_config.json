@@ -20,6 +20,70 @@
       "identifier" : "sequence_file",
       "paths" : [],
       "post_process" : "count"
+    },
+    {
+      "placeholder" : "organ",
+      "entity_type" : "biomaterial",
+      "identifier" : "specimen_from_organism",
+      "paths" : ["organ.text", "organ_part.text"],
+      "post_process" : ""
+    },
+    {
+      "placeholder" : "genus_species",
+      "entity_type" : "biomaterial",
+      "identifier" : "donor_organism",
+      "paths" : ["genus_species.text"],
+      "post_process" : ""
+    },
+    {
+      "placeholder" : "contact names/emails",
+      "entity_type" : "project",
+      "identifier" : null,
+      "paths" : ["contributors[*].contact_name", "contributors[*].email"],
+      "post_process" : ""
+    },
+    {
+      "placeholder" : "no. donors",
+      "entity_type" : "biomaterial",
+      "identifier" : "donor_organism",
+      "paths" : [],
+      "post_process" : "count"
+    },
+    {
+      "placeholder" : "no. specimens",
+      "entity_type" : "biomaterial",
+      "identifier" : "specimen_from_organism",
+      "paths" : [],
+      "post_process" : "count"
+    },
+    {
+      "placeholder" : "no. cell lines",
+      "entity_type" : "biomaterial",
+      "identifier" : "cell_line",
+      "paths" : [],
+      "post_process" : "count"
+    },
+    {
+      "placeholder" : "no. organoids",
+      "entity_type" : "biomaterial",
+      "identifier" : "organoid",
+      "paths" : [],
+      "post_process" : "count"
+    },
+    {
+      "placeholder" : "no. cell suspension",
+      "entity_type" : "biomaterial",
+      "identifier" : "cell_suspension",
+      "paths" : [],
+      "post_process" : "count"
+    },
+    {
+      "placeholder" : "library_construction_approach",
+      "entity_type" : "protocol",
+      "identifier" : null,
+      "paths" : ["library_construction_approach.text"],
+      "post_process" : ""
     }
   ]
 }
+
