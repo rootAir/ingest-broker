@@ -32,7 +32,7 @@
       "placeholder" : "genus_species",
       "entity_type" : "biomaterial",
       "identifier" : "donor_organism",
-      "paths" : ["genus_species.text"],
+      "paths" : ["genus_species[*].text"],
       "post_process" : ""
     },
     {
