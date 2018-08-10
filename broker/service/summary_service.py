@@ -114,7 +114,8 @@ class SummaryService:
     def get_submissions_in_project(self, project_resource) -> Generator[dict, None, None]:
         yield from self.ingestapi.getRelatedEntities('submissionEnvelopes', project_resource, 'submissionEnvelopes')
 
-    def generate_summary_for_entity(self, entities) -> EntitySummary:
+    @staticmethod
+    def generate_summary_for_entity(entities) -> EntitySummary:
         """
         given a collection of entities (i.e biomaterials, protocols, processes, ...) a submission,
         returns a summary of the entities i.e specific entity types with releated counts
@@ -127,7 +128,7 @@ class SummaryService:
 
         entity_specific_types = dict()
         for entity in entities:
-            specific_type = self.parse_specific_entity_type(entity)
+            specific_type = SummaryService.parse_specific_entity_type(entity)
             if specific_type not in entity_specific_types:
                 entity_specific_types[specific_type] = {'count': 0}
 
@@ -162,10 +163,11 @@ class ScrapeConfig:
     Represents a configuration file used to configure a SubmissionScraper
     """
 
-    def __init__(self, placeholder, entity_type, path, post_process):
+    def __init__(self, placeholder, entity_type, identifier, path, post_process):
         self.placeholder = placeholder
         self.entity_type = entity_type
         self.path = path
+        self.identifier = identifier
         self.post_process = post_process
 
 
@@ -178,12 +180,52 @@ class SubmissionScraper:
         collection of matching field-values as param and return a single value
         """
 
-        def __init__(self, placeholder=None, entity_type=None, paths=None, reducer=None):
+        def __init__(self, placeholder=None, entity_type=None, identifier=None, paths=None, reducer=None):
             self.placeholder = placeholder
             self.entity_type = entity_type
+            self.identifier = identifier
             self.paths = paths
             self.reducer = reducer
             self.parsers = [parse(path) for path in self.paths]
+            self.apply = None
+
+        def build(self):
+            self.apply = self.generateApplyFunction()
+
+        def generateApplyFunction(self):
+            """
+            If an identifier is specified, we want the following algorithm:
+            - return entities matching the identifier
+
+            If a path is specified, we want the algorithm to additionally:
+            - return matched fields within eligible entities
+            :return:
+            """
+            parsers = self.parsers
+            identifier = self.identifier
+
+            def identify(entity):
+                return entity if SummaryService.parse_specific_entity_type(entity) == identifier else {}
+
+            def pathMatch(entity):
+                found_values = []
+                for parser in parsers:
+                    found_values += [match.value for match in parser.find(entity['content'])]
+                return found_values
+
+            def combined_function():
+                if identifier:
+                    if parsers and (len(parsers) > 0):
+                        return lambda entity: pathMatch(identify(entity))
+                    else:
+                        return lambda entity: id(entity)
+                elif parsers and (len(parsers) > 0):
+                    return lambda entity: pathMatch(entity)
+                else:
+                    raise Exception("Can't generate a parse directive without either an identifier or path matcher")
+
+            return combined_function()
+
 
     class GroupedDirectives:
         def __init__(self):
@@ -195,6 +237,8 @@ class SubmissionScraper:
 
     def __init__(self, directives=None):
         self.directives = directives if directives else []
+        for directive in self.directives:
+            directive.build()
         self.grouped_directives = self.group_directives(self.directives)
 
 
@@ -213,14 +257,13 @@ class SubmissionScraper:
                    self.apply_directives(submission_entities.files, self.grouped_directives.file_directives),
                    self.apply_directives(submission_entities.projects, self.grouped_directives.project_directives)]
 
-        x = 3
-
         return reduce(lambda scrape_a, scrape_b: {**scrape_a, **scrape_b}, scrapes)
 
     @staticmethod
     def apply_directives(entities, directives):
         """
         Applying a directive:
+        - if an identifier for a concrete entity is specified, only apply to matching entities
         - find matching keys by following json path
         - apply reduction algorithm to final collection
         :param entities:
@@ -231,10 +274,8 @@ class SubmissionScraper:
 
         for directive in directives:
             found_values = []
-
             for entity in entities:
-                for parser in directive.parsers:
-                    found_values += [match.value for match in parser.find(entity['content'])]
+                found_values += directive.apply(entity)
 
             if len(found_values) > 0:
                 scrape_result[directive.placeholder] = directive.reducer(found_values)
@@ -263,6 +304,7 @@ class SubmissionScraper:
     def scrape_configs_from_dicts(configs: Iterable[dict]) -> Generator[ScrapeConfig, None, None]:
         yield from map(lambda conf: ScrapeConfig(conf['placeholder'],
                                                  conf['entity_type'],
+                                                 conf['identifier'],
                                                  conf['paths'],
                                                  conf['post_process']),
                        configs)
@@ -283,6 +325,7 @@ class SubmissionScraper:
         """
         return map(lambda scrape_config: SubmissionScraper.Directive(scrape_config.placeholder,
                                                                      scrape_config.entity_type,
+                                                                     scrape_config.identifier,
                                                                      scrape_config.path,
                                                                      SubmissionScraper.reducer_for(scrape_config.post_process)), scrape_configs)
 
