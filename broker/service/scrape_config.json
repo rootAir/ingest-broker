@@ -18,7 +18,7 @@
       "placeholder" : "no. fastqs",
       "entity_type" : "file",
       "identifier" : "sequence_file",
-      "paths" : ["read_index"],
+      "paths" : [],
       "post_process" : "count"
     }
   ]
