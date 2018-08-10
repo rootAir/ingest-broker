@@ -331,5 +331,7 @@ class SubmissionScraper:
             return lambda collection: reduce((lambda x, y: x + y), collection, 0)
         elif post_process_func == "count":
             return lambda collection: reduce((lambda x, y: x + 1), collection, 0)
+        elif post_process_func == "unique":
+            return lambda collection: list(set(collection))
         else:
             return lambda collection: collection  # just return the collection
