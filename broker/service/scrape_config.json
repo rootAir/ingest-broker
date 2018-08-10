@@ -26,14 +26,14 @@
       "entity_type" : "biomaterial",
       "identifier" : "specimen_from_organism",
       "paths" : ["organ.text", "organ_part.text"],
-      "post_process" : ""
+      "post_process" : "unique"
     },
     {
       "placeholder" : "genus_species",
       "entity_type" : "biomaterial",
       "identifier" : "donor_organism",
       "paths" : ["genus_species[*].text"],
-      "post_process" : ""
+      "post_process" : "unique"
     },
     {
       "placeholder" : "contact_names/emails",
