@@ -8,14 +8,14 @@
       "post_process" : ""
     },
     {
-      "placeholder" : "no. total estimated cells",
+      "placeholder" : "num_total_estimated_cells",
       "entity_type" : "biomaterial",
       "identifier" : null,
-      "paths" : ["cell_suspension.total_estimated_cells"],
+      "paths" : ["total_estimated_cells"],
       "post_process" : "sum"
     },
     {
-      "placeholder" : "no. fastqs",
+      "placeholder" : "num_fastqs",
       "entity_type" : "file",
       "identifier" : "sequence_file",
       "paths" : [],
@@ -36,42 +36,42 @@
       "post_process" : ""
     },
     {
-      "placeholder" : "contact names/emails",
+      "placeholder" : "contact_names/emails",
       "entity_type" : "project",
       "identifier" : null,
       "paths" : ["contributors[*].contact_name", "contributors[*].email"],
       "post_process" : ""
     },
     {
-      "placeholder" : "no. donors",
+      "placeholder" : "num_donors",
       "entity_type" : "biomaterial",
       "identifier" : "donor_organism",
       "paths" : [],
       "post_process" : "count"
     },
     {
-      "placeholder" : "no. specimens",
+      "placeholder" : "num_specimens",
       "entity_type" : "biomaterial",
       "identifier" : "specimen_from_organism",
       "paths" : [],
       "post_process" : "count"
     },
     {
-      "placeholder" : "no. cell lines",
+      "placeholder" : "num_cell lines",
       "entity_type" : "biomaterial",
       "identifier" : "cell_line",
       "paths" : [],
       "post_process" : "count"
     },
     {
-      "placeholder" : "no. organoids",
+      "placeholder" : "num_organoids",
       "entity_type" : "biomaterial",
       "identifier" : "organoid",
       "paths" : [],
       "post_process" : "count"
     },
     {
-      "placeholder" : "no. cell suspension",
+      "placeholder" : "num_cell suspension",
       "entity_type" : "biomaterial",
       "identifier" : "cell_suspension",
       "paths" : [],
@@ -80,10 +80,9 @@
     {
       "placeholder" : "library_construction_approach",
       "entity_type" : "protocol",
-      "identifier" : null,
+      "identifier" : "library_preparation_protocol",
       "paths" : ["library_construction_approach.text"],
       "post_process" : ""
     }
   ]
 }
-
