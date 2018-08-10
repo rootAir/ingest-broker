@@ -263,10 +263,9 @@ class SubmissionScraper:
     @staticmethod
     def apply_directives(entities, directives):
         """
-        Applying a directive:
-        - if an identifier for a concrete entity is specified, only apply to matching entities
-        - find matching keys by following json path
-        - apply reduction algorithm to final collection
+        Applies scrape directives: for each, calls it matcher and reduces output using directive's reducer function
+        A dictionary of results is returned
+
         :param entities:
         :param directives:
         :return:
@@ -274,10 +273,7 @@ class SubmissionScraper:
         scrape_result = dict()
 
         for directive in directives:
-            found_values = []
-            for entity in entities:
-                found_values += directive.apply([entity])
-
+            found_values = directive.apply(entities)
             scrape_result[directive.placeholder] = directive.reducer(found_values)
 
         return scrape_result
