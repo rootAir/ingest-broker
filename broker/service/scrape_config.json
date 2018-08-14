@@ -1,0 +1,102 @@
+{
+  "configs" : [
+    {
+      "placeholder" : "project_title",
+      "entity_type" : "project",
+      "identifier" : null,
+      "paths" : ["project_core.project_title"],
+      "post_process" : ""
+    },
+    {
+      "placeholder" : "cell_type",
+      "entity_type" : "biomaterial",
+      "identifier" : "cell_suspension",
+      "paths" : ["selected_cell_type[*].text"],
+      "post_process" : "unique"
+    },
+    {
+      "placeholder" : "num_total_estimated_cells",
+      "entity_type" : "biomaterial",
+      "identifier" : null,
+      "paths" : ["total_estimated_cells"],
+      "post_process" : "sum"
+    },
+    {
+      "placeholder" : "num_fastqs",
+      "entity_type" : "file",
+      "identifier" : "sequence_file",
+      "paths" : [],
+      "post_process" : "count"
+    },
+    {
+      "placeholder" : "organ",
+      "entity_type" : "biomaterial",
+      "identifier" : "specimen_from_organism",
+      "paths" : ["organ.text", "organ_part.text"],
+      "post_process" : "unique"
+    },
+    {
+      "placeholder" : "organoid_organ_model",
+      "entity_type" : "biomaterial",
+      "identifier" : "organoid",
+      "paths" : ["model_for_organ.text", "model_organ_part.text"],
+      "post_process" : "unique"
+    },    
+    {
+      "placeholder" : "genus_species",
+      "entity_type" : "biomaterial",
+      "identifier" : "donor_organism",
+      "paths" : ["genus_species[*].text"],
+      "post_process" : "unique"
+    },
+    {
+      "placeholder" : "contact_names/emails",
+      "entity_type" : "project",
+      "identifier" : null,
+      "paths" : ["contributors[*].contact_name", "contributors[*].email"],
+      "post_process" : ""
+    },
+    {
+      "placeholder" : "num_donors",
+      "entity_type" : "biomaterial",
+      "identifier" : "donor_organism",
+      "paths" : [],
+      "post_process" : "count"
+    },
+    {
+      "placeholder" : "num_specimens",
+      "entity_type" : "biomaterial",
+      "identifier" : "specimen_from_organism",
+      "paths" : [],
+      "post_process" : "count"
+    },
+    {
+      "placeholder" : "num_cell lines",
+      "entity_type" : "biomaterial",
+      "identifier" : "cell_line",
+      "paths" : [],
+      "post_process" : "count"
+    },
+    {
+      "placeholder" : "num_organoids",
+      "entity_type" : "biomaterial",
+      "identifier" : "organoid",
+      "paths" : [],
+      "post_process" : "count"
+    },
+    {
+      "placeholder" : "num_cell suspension",
+      "entity_type" : "biomaterial",
+      "identifier" : "cell_suspension",
+      "paths" : [],
+      "post_process" : "count"
+    },
+    {
+      "placeholder" : "library_construction_approach",
+      "entity_type" : "protocol",
+      "identifier" : "library_preparation_protocol",
+      "paths" : ["library_construction_approach.text"],
+      "post_process" : ""
+    }
+  ]
+}

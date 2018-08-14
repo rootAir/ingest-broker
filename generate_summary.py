@@ -10,7 +10,7 @@ import argparse
 def generate_submission_summary(uuid, ingest_url):
     ingest_api = IngestApi(ingest_url)
     submission = ingest_api.getSubmissionByUuid(uuid)
-    summary = SummaryService().summary_for_submission(submission)
+    summary = SummaryService(ingest_api).summary_for_submission(submission)
 
     return summary
 
@@ -18,7 +18,7 @@ def generate_submission_summary(uuid, ingest_url):
 def generate_project_summary(uuid, ingest_url):
     ingest_api = IngestApi(ingest_url)
     project = ingest_api.getProjectByUuid(uuid)
-    summary = SummaryService().summary_for_project(project)
+    summary = SummaryService(ingest_api).summary_for_project(project)
 
     return summary
 

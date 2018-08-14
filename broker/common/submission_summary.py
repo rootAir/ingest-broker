@@ -10,6 +10,8 @@ class SubmissionSummary:
         self.file_summary = EntitySummary()
         self.project_summary = EntitySummary()
 
+        self.scrape_result = dict()
+
         self.submission_status = None
         self.create_date = None
         self.last_updated_date = None
