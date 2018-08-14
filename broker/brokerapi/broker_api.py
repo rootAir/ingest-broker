@@ -41,6 +41,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+logging.getLogger("IngestApi").setLevel(logging.DEBUG)
 
 @app.route('/api_upload', methods=['POST'])
 @cross_origin()
