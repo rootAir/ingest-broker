@@ -9,7 +9,7 @@ itsdangerous==0.24
 jdcal==1.4
 MarkupSafe==1.0
 Werkzeug==0.13
--e "git+https://github.com/HumanCellAtlas/ingest-client.git@7a7e30eec2ee95c15b1b717515af372efc01b5ca#egg=hca_ingest"
+-e "git+https://github.com/HumanCellAtlas/ingest-client.git@ec65bb6#egg=hca_ingest"
 jsonpickle
 expiringdict==1.1.4
 jsonpath-rw
