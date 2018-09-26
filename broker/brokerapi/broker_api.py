@@ -60,8 +60,6 @@ def upload_spreadsheet():
         if project and project.get('uuid'):
             project_uuid = project.get('uuid').get('uuid')
 
-        _attempt_dry_run(importer, path, project_uuid)
-
         submission_url = ingest_api.createSubmission(token)
 
         _submit_spreadsheet_data(importer, path, submission_url, project_uuid)
@@ -102,21 +100,11 @@ def project_summary(project_uuid):
 
 def _submit_spreadsheet_data(importer, path, submission_url, project_uuid):
 
-    logger.info("Attempting submission")
+    logger.info("Attempting submission...")
     thread = threading.Thread(target=importer.import_file, args=(path, submission_url, project_uuid))
     thread.start()
-    logger.info("Spreadsheet upload completed")
+    logger.info("Spreadsheet upload started!")
     return submission_url
-
-
-def _attempt_dry_run(importer, path, project_uuid=None):
-    logger.info("Attempting dry run to validate spreadsheet")
-    try:
-        importer.dry_run_import_file(path, project_uuid=project_uuid)
-    except Exception as err:
-        logger.error(traceback.format_exc())
-        message = "There was a problem validating your spreadsheet"
-        raise SpreadsheetUploadError(400, message, str(err))
 
 
 def _check_for_project(ingest_api):
@@ -171,7 +159,7 @@ def create_upload_success_response(submission_url):
     submission_id = submission_url.rsplit('/', 1)[-1]
 
     data = {
-        "message": "Your spreadsheet was uploaded and processed successfully",
+        "message": "We’ve got your spreadsheet, and we’re currently importing and validating the data. Nothing else for you to do - check back later.",
         "details": {
             "submission_url": submission_url,
             "submission_uuid": submission_uuid,
