@@ -101,10 +101,15 @@ def project_summary(project_uuid):
 def _submit_spreadsheet_data(importer, path, submission_url, project_uuid):
 
     logger.info("Attempting submission...")
-    thread = threading.Thread(target=importer.import_file, args=(path, submission_url, project_uuid))
+    thread = threading.Thread(target=_do_import, args=(importer, path, submission_url, project_uuid))
     thread.start()
     logger.info("Spreadsheet upload started!")
     return submission_url
+
+
+def _do_import(importer, path, submission_url, project_uuid):
+    importer.import_file(path, submission_url, project_uuid)
+    return
 
 
 def _check_for_project(ingest_api):
