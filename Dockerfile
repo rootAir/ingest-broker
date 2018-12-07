@@ -1,12 +1,8 @@
 FROM python:3-slim
 MAINTAINER Simon Jupp "jupp@ebi.ac.uk"
 
-RUN apk update && \
-    apk add gcc  && \
-    apk add libc-dev  && \
-    apk add openssl-dev && \
-    apk add libffi-dev && \
-    apk add git
+RUN apt-get update &&\
+    apt-get install -y git
 
 RUN mkdir /app
 
@@ -17,7 +13,6 @@ COPY requirements.txt /app/requirements.txt
 WORKDIR /app/
 
 RUN pip install -r /app/requirements.txt
-RUN apk del gcc
 
 ENV INGEST_API=http://localhost:8080
 
