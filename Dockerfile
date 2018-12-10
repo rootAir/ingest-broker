@@ -1,8 +1,12 @@
-FROM python:3-slim
+FROM python:3-alpine
 MAINTAINER Simon Jupp "jupp@ebi.ac.uk"
 
-RUN apt-get update &&\
-    apt-get install -y git
+RUN apk update && \
+    apk add gcc  && \
+    apk add libc-dev  && \
+    apk add openssl-dev && \
+    apk add libffi-dev && \
+    apk add git
 
 RUN mkdir /app
 
@@ -13,6 +17,7 @@ COPY requirements.txt /app/requirements.txt
 WORKDIR /app/
 
 RUN pip install -r /app/requirements.txt
+RUN apk del gcc
 
 ENV INGEST_API=http://localhost:8080
 
