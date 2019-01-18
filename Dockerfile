@@ -20,6 +20,7 @@ RUN pip install -r /app/requirements.txt
 RUN apk del gcc
 
 ENV INGEST_API=http://localhost:8080
+ENV REQUESTS_MAX_RETRIES=5
 
 EXPOSE 5000
 ENTRYPOINT ["python"]
